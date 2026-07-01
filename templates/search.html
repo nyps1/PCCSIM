@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="card">
+    <h2>搜尋條件</h2>
+
+    <form method="GET" action="{{ url_for('search') }}">
+        <div class="form-grid">
+
+            <div class="form-group">
+                <label>申請日期</label>
+                <input type="date" name="apply_date" value="{{ filters.apply_date }}">
+            </div>
+
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" name="title" value="{{ filters.title }}">
+            </div>
+
+            <div class="form-group">
+                <label>IN/DN</label>
+                <select name="in_dn">
+                    <option value="">全部</option>
+                    <option value="IN" {% if filters.in_dn == "IN" %}selected{% endif %}>IN</option>
+                    <option value="DN" {% if filters.in_dn == "DN" %}selected{% endif %}>DN</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Create Date</label>
+                <input type="date" name="create_date" value="{{ filters.create_date }}">
+            </div>
+
+            <div class="form-group">
+                <label>Close Date</label>
+                <input type="date" name="close_date" value="{{ filters.close_date }}">
+            </div>
+
+            <div class="form-group">
+                <label>Machine</label>
+                <input type="text" name="machine" value="{{ filters.machine }}">
+            </div>
+
+            <div class="form-group">
+                <label>Module Name</label>
+                <input type="text" name="module_name" value="{{ filters.module_name }}">
+            </div>
+
+            <div class="form-group">
+                <label>Department</label>
+                <input type="text" name="department" value="{{ filters.department }}">
+            </div>
+
+            <div class="form-group">
+                <label>Author</label>
+                <input type="text" name="author" value="{{ filters.author }}">
+            </div>
+
+        </div>
+
+        <div class="button-area">
+            <a href="{{ url_for('search') }}" class="btn secondary">清除篩選</a>
+            <button type="submit" class="btn primary">搜尋</button>
+        </div>
+    </form>
+</section>
+
+<section class="card">
+    <h2>搜尋結果</h2>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>申請日期</th>
+                    <th>Title</th>
+                    <th>IN/DN</th>
+                    <th>Create Date</th>
+                    <th>Close Date</th>
+                    <th>Machine</th>
+                    <th>Module Name</th>
+                    <th>Department</th>
+                    <th>Author</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% if rows %}
+                    {% for row in rows %}
+                    <tr>
+                        <td>{{ row.apply_date }}</td>
+                        <td>{{ row.title }}</td>
+                        <td>{{ row.in_dn }}</td>
+                        <td>{{ row.create_date }}</td>
+                        <td>{{ row.close_date }}</td>
+                        <td>{{ row.machine }}</td>
+                        <td>{{ row.module_name }}</td>
+                        <td>{{ row.department }}</td>
+                        <td>{{ row.author }}</td>
+                        <td>
+                            <a href="{{ url_for('detail', request_no=row.request_no) }}" class="link-btn">
+                                明細
+                            </a>
+
+                            <a href="{{ url_for('export_ppt', request_no=row.request_no) }}" class="link-btn">
+                                匯出 PPT
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="10" class="no-data">查無資料</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>PCCIM</title>
+
+    <!-- 連接 static/style.css -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+<body>
+
+<header>
+    PCCIM
+</header>
+
+<nav>
+    <a href="{{ url_for('apply') }}">申請介面</a>
+    <a href="{{ url_for('search') }}">搜尋介面</a>
+</nav>
+
+<main>
+    {% block content %}
+    {% endblock %}
+</main>
+
+</body>
+</html>
