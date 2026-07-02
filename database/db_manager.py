@@ -25,6 +25,7 @@ class DatabaseManager:
                 close_date TEXT,
                 machine TEXT,
                 module_name TEXT,
+                tmn TEXT,
                 department TEXT,
                 author TEXT,
                 problem_description TEXT,

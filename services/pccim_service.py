@@ -26,6 +26,7 @@ class PCCIMService:
                 close_date,
                 machine,
                 module_name,
+                tmn,
                 department,
                 author,
                 problem_description,
@@ -35,7 +36,7 @@ class PCCIMService:
                 root_cause,
                 solution
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, application.to_tuple())
 
         conn.commit()
@@ -71,6 +72,7 @@ class PCCIMService:
                 close_date,
                 machine,
                 module_name,
+                tmn,
                 department,
                 author
             FROM applications
@@ -106,6 +108,10 @@ class PCCIMService:
         if filters.get("module_name"):
             sql += " AND module_name LIKE ?"
             params.append(f"%{filters['module_name']}%")
+
+        if filters.get("tmn"):
+            sql += " AND tmn LIKE ?"
+            params.append(f"%{filters['tmn']}%")
 
         if filters.get("department"):
             sql += " AND department LIKE ?"

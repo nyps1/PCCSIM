@@ -34,7 +34,7 @@
             </div>
 
             <div class="form-group">
-                <label>Machine</label>
+                <label>Machine/Tool</label>
                 <input type="text" name="machine" value="{{ filters.machine }}">
             </div>
 
@@ -46,6 +46,11 @@
             <div class="form-group">
                 <label>Department</label>
                 <input type="text" name="department" value="{{ filters.department }}">
+            </div>
+
+            <div class="form-group">
+                <label>TMN</label>
+                <input type="text" name="tmn" value="{{ filters.tmn }}">
             </div>
 
             <div class="form-group">
@@ -74,8 +79,9 @@
                     <th>IN/DN</th>
                     <th>Create Date</th>
                     <th>Close Date</th>
-                    <th>Machine</th>
+                    <th>Machine/Tool</th>
                     <th>Module Name</th>
+                    <th>TMN</th>
                     <th>Department</th>
                     <th>Author</th>
                     <th>操作</th>
@@ -93,6 +99,7 @@
                         <td>{{ row.close_date }}</td>
                         <td>{{ row.machine }}</td>
                         <td>{{ row.module_name }}</td>
+                        <td>{{ row.tmn }}</td>                        
                         <td>{{ row.department }}</td>
                         <td>{{ row.author }}</td>
                         <td>

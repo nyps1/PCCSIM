@@ -54,7 +54,8 @@ class PowerPointExporter:
             IN/DN: {application['in_dn']}
             Create Date: {application['create_date']}
             Close Date: {application['close_date']}
-            Machine: {application['machine']}
+            Machine/Tool: {application['machine']}
+            TMN: {application['tmn']}
             Module Name: {application['module_name']}
             Department: {application['department']}
             Author: {application['author']}

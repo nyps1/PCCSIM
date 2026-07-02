@@ -57,6 +57,7 @@ def apply():
             close_date=request.form.get("close_date", "").strip(),
             machine=request.form.get("machine", "").strip(),
             module_name=request.form.get("module_name", "").strip(),
+            tmn=request.form.get("tmn", "").strip(),
             department=request.form.get("department", "").strip(),
             author=request.form.get("author", "").strip(),
             problem_description=request.form.get("problem_description", "").strip(),

@@ -9,6 +9,7 @@ class Application:
         close_date,
         machine,
         module_name,
+        tmn,
         department,
         author,
         problem_description,
@@ -26,6 +27,7 @@ class Application:
         self.close_date = close_date
         self.machine = machine
         self.module_name = module_name
+        self.tmn = tmn
         self.department = department
         self.author = author
         self.problem_description = problem_description
@@ -45,6 +47,7 @@ class Application:
             self.close_date,
             self.machine,
             self.module_name,
+            self.tmn,
             self.department,
             self.author,
             self.problem_description,
