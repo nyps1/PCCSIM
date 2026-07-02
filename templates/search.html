@@ -20,11 +20,7 @@
 
             <div class="form-group">
                 <label>IN/DN</label>
-                <select name="in_dn">
-                    <option value="">全部</option>
-                    <option value="IN" {% if filters.in_dn == "IN" %}selected{% endif %}>IN</option>
-                    <option value="DN" {% if filters.in_dn == "DN" %}selected{% endif %}>DN</option>
-                </select>
+                <input type="text" name="in_dn" value="{{ filters.in_dn }}" placeholder="請輸入 IN/DN">
             </div>
 
             <div class="form-group">

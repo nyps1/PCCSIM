@@ -88,8 +88,8 @@ class PCCIMService:
             params.append(f"%{filters['title']}%")
 
         if filters.get("in_dn"):
-            sql += " AND in_dn = ?"
-            params.append(filters["in_dn"])
+            sql += " AND in_dn LIKE ?"
+            params.append(f"%{filters['in_dn']}%")
 
         if filters.get("create_date"):
             sql += " AND create_date = ?"

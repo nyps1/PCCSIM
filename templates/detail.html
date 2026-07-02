@@ -15,7 +15,7 @@
         <div><strong>申請單號：</strong>{{ application.request_no }}</div>
         <div><strong>申請日期：</strong>{{ application.apply_date }}</div>
         <div><strong>Title：</strong>{{ application.title }}</div>
-        <div><strong>IN/DN：</strong>{{ application.in_dn }}</div>
+        <div><strong>IN/DN：</strong>{{ application.in_dn or "" }}</div>
         <div><strong>Create Date：</strong>{{ application.create_date }}</div>
         <div><strong>Close Date：</strong>{{ application.close_date }}</div>
         <div><strong>Machine：</strong>{{ application.machine }}</div>

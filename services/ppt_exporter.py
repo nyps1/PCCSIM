@@ -48,17 +48,17 @@ class PowerPointExporter:
         self._add_title(slide, "PCCIM Application Report")
 
         info_text = f"""
-Request No: {application['request_no']}
-Apply Date: {application['apply_date']}
-Title: {application['title']}
-IN/DN: {application['in_dn']}
-Create Date: {application['create_date']}
-Close Date: {application['close_date']}
-Machine: {application['machine']}
-Module Name: {application['module_name']}
-Department: {application['department']}
-Author: {application['author']}
-"""
+            Request No: {application['request_no']}
+            Apply Date: {application['apply_date']}
+            Title: {application['title']}
+            IN/DN: {application['in_dn']}
+            Create Date: {application['create_date']}
+            Close Date: {application['close_date']}
+            Machine: {application['machine']}
+            Module Name: {application['module_name']}
+            Department: {application['department']}
+            Author: {application['author']}
+            """
 
         box = slide.shapes.add_textbox(
             Inches(0.7),
