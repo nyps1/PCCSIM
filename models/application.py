@@ -7,53 +7,97 @@ class Application:
         in_dn,
         create_date,
         close_date,
-        machine,
+        machine_or_tool,
         module_name,
-        tmn,
         department,
         author,
+
         problem_description,
+        problem_timeline,
+
         action_taken,
-        impact_container,
+
+        impact,
+
+        container,
+
         need_help,
-        root_cause,
-        solution
+
+        root_cause_description,
+        root_cause_possible_cause,
+        root_cause_troubleshooting_timeline,
+
+        solution,
+
+        implementation,
+
+        monitoring
     ):
         self.request_no = request_no
         self.apply_date = apply_date
+
         self.title = title
         self.in_dn = in_dn
         self.create_date = create_date
         self.close_date = close_date
-        self.machine = machine
+        self.machine_or_tool = machine_or_tool
         self.module_name = module_name
-        self.tmn = tmn
         self.department = department
         self.author = author
+
         self.problem_description = problem_description
+        self.problem_timeline = problem_timeline
+
         self.action_taken = action_taken
-        self.impact_container = impact_container
+
+        self.impact = impact
+
+        self.container = container
+
         self.need_help = need_help
-        self.root_cause = root_cause
+
+        self.root_cause_description = root_cause_description
+        self.root_cause_possible_cause = root_cause_possible_cause
+        self.root_cause_troubleshooting_timeline = root_cause_troubleshooting_timeline
+
         self.solution = solution
+
+        self.implementation = implementation
+
+        self.monitoring = monitoring
 
     def to_tuple(self):
         return (
             self.request_no,
             self.apply_date,
+
             self.title,
             self.in_dn,
             self.create_date,
             self.close_date,
-            self.machine,
+            self.machine_or_tool,
             self.module_name,
-            self.tmn,
             self.department,
             self.author,
+
             self.problem_description,
+            self.problem_timeline,
+
             self.action_taken,
-            self.impact_container,
+
+            self.impact,
+
+            self.container,
+
             self.need_help,
-            self.root_cause,
-            self.solution
+
+            self.root_cause_description,
+            self.root_cause_possible_cause,
+            self.root_cause_troubleshooting_timeline,
+
+            self.solution,
+
+            self.implementation,
+
+            self.monitoring
         )

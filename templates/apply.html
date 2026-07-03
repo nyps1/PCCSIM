@@ -2,19 +2,64 @@
 
 {% block content %}
 
+{% macro attachment_block(section_key, section_title, open_default=False) %}
+<details class="attachment-collapse" {% if open_default %}open{% endif %}>
+    <summary>
+        <span>{{ section_title }} 附件</span>
+        <small>點擊展開 / 收合</small>
+    </summary>
+
+    <p class="section-hint">
+        支援圖片與 PowerPoint，最多可上傳 {{ max_image_count }} 個附件。
+        <br>
+        支援格式：png、jpg、jpeg、gif、bmp、webp、ppt、pptx
+    </p>
+
+    <div class="image-grid">
+        {% for i in range(1, max_image_count + 1) %}
+        <div class="image-box">
+            <div class="image-box-header">
+                <span class="image-badge">{{ section_title }} 附件 {{ i }}</span>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ section_key }}_attachment_{{ i }}">選擇附件</label>
+                <input
+                    type="file"
+                    id="{{ section_key }}_attachment_{{ i }}"
+                    name="{{ section_key }}_attachment_{{ i }}"
+                    accept="image/*,.ppt,.pptx"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="{{ section_key }}_attachment_remark_{{ i }}">附件備註</label>
+                <textarea
+                    id="{{ section_key }}_attachment_remark_{{ i }}"
+                    name="{{ section_key }}_attachment_remark_{{ i }}"
+                    placeholder="請輸入 {{ section_title }} 附件 {{ i }} 的備註"
+                ></textarea>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</details>
+{% endmacro %}
+
 <form method="POST" enctype="multipart/form-data">
 
+    <!-- 基本資訊 -->
     <section class="card">
         <h2>基本資訊</h2>
 
         <div class="form-grid">
             <div class="form-group">
-                <label>申請單號</label>
+                <label>Apply Number</label>
                 <input type="text" value="系統自動產生" readonly>
             </div>
 
             <div class="form-group">
-                <label>申請日期</label>
+                <label>Apply Date</label>
                 <input type="text" value="系統自動產生" readonly>
             </div>
 
@@ -25,7 +70,7 @@
 
             <div class="form-group">
                 <label>IN/DN</label>
-                <input type="text" name="in_dn">
+                <input type="text" name="in_dn" placeholder="請輸入 IN/DN">
             </div>
 
             <div class="form-group">
@@ -40,7 +85,7 @@
 
             <div class="form-group">
                 <label>Machine/Tool</label>
-                <input type="text" name="machine">
+                <input type="text" name="machine_or_tool">
             </div>
 
             <div class="form-group">
@@ -49,94 +94,150 @@
             </div>
 
             <div class="form-group">
-                <label>TMN</label>
-                <input type="text" name="tmn">
-            </div>
-
-            <div class="form-group">
                 <label>Department</label>
                 <input type="text" name="department">
             </div>
 
             <div class="form-group">
-                <label>Author<span class="required">*</span></label>
+                <label>Author <span class="required">*</span></label>
                 <input type="text" name="author" required>
             </div>
         </div>
     </section>
 
+    <!-- Problem -->
     <section class="card">
-        <h2>內容</h2>
+        <h2>Problem</h2>
 
         <div class="content-grid">
             <div class="form-group">
-                <label>Problem Description<span class="required">*</span></label>
+                <label>Problem Description <span class="required">*</span></label>
                 <textarea name="problem_description" required></textarea>
             </div>
 
             <div class="form-group">
-                <label>Action Taken<span class="required">*</span></label>
+                <label>Problem Timeline</label>
+                <textarea name="problem_timeline"></textarea>
+            </div>
+        </div>
+
+        {{ attachment_block("problem", "Problem", True) }}
+    </section>
+
+    <!-- Action Taken -->
+    <section class="card">
+        <h2>Action Taken</h2>
+
+        <div class="content-grid single">
+            <div class="form-group">
+                <label>Action Taken <span class="required">*</span></label>
                 <textarea name="action_taken" required></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Impact Container<span class="required">*</span></label>
-                <textarea name="impact_container" required></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Need Help From PE/DE<span class="required">*</span></label>
-                <textarea name="need_help" required></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Root Cause<span class="required">*</span></label>
-                <textarea name="root_cause" required></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Solution<span class="required">*</span></label>
-                <textarea name="solution" required></textarea>
             </div>
         </div>
     </section>
 
+    <!-- Impact -->
     <section class="card">
-        <h2>附件</h2>
-        <p class="section-hint">
-            支援圖片與 PowerPoint 檔案，最多可上傳 10 個附件，每個附件可填寫備註。
-            <br>
-            支援格式：png、jpg、jpeg、gif、bmp、webp、ppt、pptx
-        </p>
+        <h2>Impact</h2>
 
-        <div class="image-grid">
-            {% for i in range(1, max_image_count + 1) %}
-            <div class="image-box">
-                <div class="image-box-header">
-                    <span class="image-badge">附件 {{ i }}</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="attachment_{{ i }}">選擇附件</label>
-                    <input
-                        type="file"
-                        id="attachment_{{ i }}"
-                        name="attachment_{{ i }}"
-                        accept="image/*,.ppt,.pptx"
-                    >
-                </div>
-
-                <div class="form-group">
-                    <label for="attachment_remark_{{ i }}">附件備註</label>
-                    <textarea
-                        id="attachment_remark_{{ i }}"
-                        name="attachment_remark_{{ i }}"
-                        placeholder="請輸入附件 {{ i }} 的備註"
-                    ></textarea>
-                </div>
+        <div class="content-grid single">
+            <div class="form-group">
+                <label>Impact <span class="required">*</span></label>
+                <textarea name="impact" required></textarea>
             </div>
-            {% endfor %}
         </div>
+    </section>
+
+    <!-- Container -->
+    <section class="card">
+        <h2>Container</h2>
+
+        <div class="content-grid single">
+            <div class="form-group">
+                <label>Container <span class="required">*</span></label>
+                <textarea name="container" required></textarea>
+            </div>
+        </div>
+
+        {{ attachment_block("container", "Container", False) }}
+    </section>
+
+    <!-- Need Help -->
+    <section class="card">
+        <h2>Need Help From PE/DE</h2>
+
+        <div class="content-grid single">
+            <div class="form-group">
+                <label>Need Help From PE/DE <span class="required">*</span></label>
+                <textarea name="need_help" required></textarea>
+            </div>
+        </div>
+    </section>
+
+    <!-- Root Cause -->
+    <section class="card">
+        <h2>Root Cause</h2>
+
+        <div class="content-grid">
+            <div class="form-group">
+                <label>Root Cause Description <span class="required">*</span></label>
+                <textarea name="root_cause_description" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Root Cause Possible Cause</label>
+                <textarea name="root_cause_possible_cause"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Root Cause Troubleshooting Timeline</label>
+                <textarea name="root_cause_troubleshooting_timeline"></textarea>
+            </div>
+        </div>
+
+        {{ attachment_block("root_cause", "Root Cause", False) }}
+    </section>
+
+    <!-- Solution -->
+    <section class="card">
+        <h2>Solution</h2>
+
+        <div class="content-grid single">
+            <div class="form-group">
+                <label>Solution <span class="required">*</span></label>
+                <textarea name="solution" required></textarea>
+            </div>
+        </div>
+
+        {{ attachment_block("solution", "Solution", False) }}
+    </section>
+
+    <!-- Implementation -->
+    <section class="card">
+        <h2>Implementation</h2>
+
+        <div class="content-grid single">
+            <div class="form-group">
+                <label>Implementation <span class="required">*</span></label>
+                <textarea name="implementation" required></textarea>
+            </div>
+        </div>
+
+        {{ attachment_block("implementation", "Implementation", False) }}
+    </section>
+
+    <!-- Monitoring -->
+    <section class="card">
+        <h2>Monitoring</h2>
+
+        <div class="content-grid single">
+            <div class="form-group">
+                <label>Monitoring <span class="required">*</span></label>
+                <textarea name="monitoring" required></textarea>
+            </div>
+        </div>
+
+        {{ attachment_block("monitoring", "Monitoring", False) }}
     </section>
 
     <div class="button-area">

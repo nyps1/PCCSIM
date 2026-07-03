@@ -2,86 +2,53 @@
 
 {% block content %}
 
-<section class="card">
-    <div class="title-row">
-        <h2>申請明細</h2>
+{% macro render_attachments(section_key, section_title, section_attachments) %}
+<details class="attachment-collapse">
+    <summary>
+        <span>{{ section_title }} 附件</span>
+        <small>點擊展開 / 收合</small>
+    </summary>
 
-        <a href="{{ url_for('export_ppt', request_no=application.request_no) }}" class="btn primary">
-            匯出 PowerPoint
-        </a>
-    </div>
-
-    <div class="detail-grid">
-        <div><strong>申請單號：</strong>{{ application.request_no }}</div>
-        <div><strong>申請日期：</strong>{{ application.apply_date }}</div>
-        <div><strong>Title：</strong>{{ application.title }}</div>
-        <div><strong>IN/DN：</strong>{{ application.in_dn or "" }}</div>
-        <div><strong>Create Date：</strong>{{ application.create_date }}</div>
-        <div><strong>Close Date：</strong>{{ application.close_date }}</div>
-        <div><strong>Machine/Tool：</strong>{{ application.machine }}</div>
-        <div><strong>Module Name：</strong>{{ application.module_name }}</div>
-        <div><strong>TMN：</strong>{{ application.tmn }}</div>
-        <div><strong>Department：</strong>{{ application.department }}</div>
-        <div><strong>Author：</strong>{{ application.author }}</div>
-    </div>
-</section>
-
-<section class="card">
-    <h2>內容</h2>
-
-    <div class="detail-content">
-        <h3>Problem Description</h3>
-        <p>{{ application.problem_description }}</p>
-
-        <h3>Action Taken</h3>
-        <p>{{ application.action_taken }}</p>
-
-        <h3>Impact Container</h3>
-        <p>{{ application.impact_container }}</p>
-
-        <h3>Need Help From PE/DE</h3>
-        <p>{{ application.need_help }}</p>
-
-        <h3>Root Cause</h3>
-        <p>{{ application.root_cause }}</p>
-
-        <h3>Solution</h3>
-        <p>{{ application.solution }}</p>
-    </div>
-</section>
-
-<section class="card">
-    <h2>附件</h2>
-
-    {% if attachments %}
+    {% if section_attachments %}
         <div class="attachment-grid">
-            {% for attachment in attachments %}
+            {% for attachment in section_attachments %}
             <div class="attachment-card">
-                <h4>附件 {{ attachment.image_no }}</h4>
+                <h4>{{ section_title }} 附件 {{ attachment.attachment_no }}</h4>
 
                 {% set filename = attachment.file_path.lower() %}
 
-                {% if filename.endswith('.png') 
-                    or filename.endswith('.jpg') 
-                    or filename.endswith('.jpeg') 
-                    or filename.endswith('.gif') 
-                    or filename.endswith('.bmp') 
+                {% if filename.endswith('.png')
+                    or filename.endswith('.jpg')
+                    or filename.endswith('.jpeg')
+                    or filename.endswith('.gif')
+                    or filename.endswith('.bmp')
                     or filename.endswith('.webp') %}
 
-                    <img
-                        src="{{ url_for('uploaded_file', filename=attachment.file_path) }}"
-                        alt="附件 {{ attachment.image_no }}"
+                    <img src="{{ url_for('uploaded_file', filename=attachment.file_path) }}"
+                        alt="{{ section_title }} 附件 {{ attachment.attachment_no }}"
                     >
+
+                    <div class="attachment-actions">
+                        <a href="{{ url_for('download_attachment', filename=attachment.file_path) }}"
+                            class="link-btn"
+                        >
+                            下載圖片
+                        </a>
+                    </div>
 
                 {% elif filename.endswith('.ppt') or filename.endswith('.pptx') %}
 
                     <div class="ppt-file-box">
                         <div class="ppt-icon">PPT</div>
+
                         <div class="ppt-info">
                             <p><strong>PowerPoint 附件</strong></p>
-                            <p>{{ attachment.file_path }}</p>
-                            <a
-                                href="{{ url_for('download_attachment', filename=attachment.file_path) }}"
+
+                            <p>
+                                {{ attachment.original_file_name or attachment.file_path }}
+                            </p>
+
+                            <a href="{{ attachment.original_file_name or attachment.file_path }}"
                                 class="link-btn"
                             >
                                 下載 PowerPoint
@@ -92,8 +59,8 @@
                 {% else %}
 
                     <p>不支援預覽此附件。</p>
-                    <a
-                        href="{{ url_for('download_attachment', filename=attachment.file_path) }}"
+
+                    <a href="{{ url_for('download_attachment', filename=attachment.file_path) }}"
                         class="link-btn"
                     >
                         下載附件
@@ -101,13 +68,171 @@
 
                 {% endif %}
 
-                <p><strong>備註：</strong>{{ attachment.remark }}</p>
+                <p>
+                    <strong>備註：</strong>
+                    {{ attachment.remark or "" }}
+                </p>
             </div>
             {% endfor %}
         </div>
     {% else %}
-        <p>沒有上傳附件。</p>
+        <p class="no-data">此區塊沒有上傳附件。</p>
     {% endif %}
+</details>
+{% endmacro %}
+
+
+<section class="card">
+    <div class="title-row">
+        <h2>申請明細</h2>
+
+        <a href="{{ url_for('export_ppt', request_no=application.request_no) }}"
+            class="btn primary"
+        >
+            匯出 PowerPoint
+        </a>
+    </div>
+
+    <div class="detail-grid">
+        <div><strong>申請單號：</strong>{{ application.request_no }}</div>
+        <div><strong>申請日期：</strong>{{ application.apply_date }}</div>
+        <div><strong>Title：</strong>{{ application.title }}</div>
+        <div><strong>IN/DN：</strong>{{ application.in_dn or "" }}</div>
+        <div><strong>Create Date：</strong>{{ application.create_date or "" }}</div>
+        <div><strong>Close Date：</strong>{{ application.close_date or "" }}</div>
+        <div><strong>Machine/Tool：</strong>{{ application.machine_or_tool or "" }}</div>
+        <div><strong>Module Name：</strong>{{ application.module_name or "" }}</div>
+        <div><strong>Department：</strong>{{ application.department or "" }}</div>
+        <div><strong>Author：</strong>{{ application.author or "" }}</div>
+    </div>
+</section>
+
+
+<section class="card">
+    <h2>Problem</h2>
+
+    <div class="detail-content">
+        <h3>Problem Description</h3>
+        <p>{{ application.problem_description or "" }}</p>
+
+        <h3>Problem Timeline</h3>
+        <p>{{ application.problem_timeline or "" }}</p>
+    </div>
+
+    {{ render_attachments(
+        "problem",
+        "Problem",
+        attachments_by_section.get("problem", [])
+    ) }}
+</section>
+
+
+<section class="card">
+    <h2>Action Taken</h2>
+
+    <div class="detail-content">
+        <p>{{ application.action_taken or "" }}</p>
+    </div>
+</section>
+
+
+<section class="card">
+    <h2>Impact</h2>
+
+    <div class="detail-content">
+        <p>{{ application.impact or "" }}</p>
+    </div>
+</section>
+
+
+<section class="card">
+    <h2>Container</h2>
+
+    <div class="detail-content">
+        <p>{{ application.container or "" }}</p>
+    </div>
+
+    {{ render_attachments(
+        "container",
+        "Container",
+        attachments_by_section.get("container", [])
+    ) }}
+</section>
+
+
+<section class="card">
+    <h2>Need Help From PE/DE</h2>
+
+    <div class="detail-content">
+        <p>{{ application.need_help or "" }}</p>
+    </div>
+</section>
+
+
+<section class="card">
+    <h2>Root Cause</h2>
+
+    <div class="detail-content">
+        <h3>Root Cause Description</h3>
+        <p>{{ application.root_cause_description or "" }}</p>
+
+        <h3>Root Cause Possible Cause</h3>
+        <p>{{ application.root_cause_possible_cause or "" }}</p>
+
+        <h3>Root Cause Troubleshooting Timeline</h3>
+        <p>{{ application.root_cause_troubleshooting_timeline or "" }}</p>
+    </div>
+
+    {{ render_attachments(
+        "root_cause",
+        "Root Cause",
+        attachments_by_section.get("root_cause", [])
+    ) }}
+</section>
+
+
+<section class="card">
+    <h2>Solution</h2>
+
+    <div class="detail-content">
+        <p>{{ application.solution or "" }}</p>
+    </div>
+
+    {{ render_attachments(
+        "solution",
+        "Solution",
+        attachments_by_section.get("solution", [])
+    ) }}
+</section>
+
+
+<section class="card">
+    <h2>Implementation</h2>
+
+    <div class="detail-content">
+        <p>{{ application.implementation or "" }}</p>
+    </div>
+
+    {{ render_attachments(
+        "implementation",
+        "Implementation",
+        attachments_by_section.get("implementation", [])
+    ) }}
+</section>
+
+
+<section class="card">
+    <h2>Monitoring</h2>
+
+    <div class="detail-content">
+        <p>{{ application.monitoring or "" }}</p>
+    </div>
+
+    {{ render_attachments(
+        "monitoring",
+        "Monitoring",
+        attachments_by_section.get("monitoring", [])
+    ) }}
 </section>
 
 {% endblock %}

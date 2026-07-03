@@ -27,9 +27,11 @@ class FileHelper:
         return ext in Config.ALLOWED_PPT_EXTENSIONS
 
     @staticmethod
-    def save_attachment(file, request_no, attachment_no):
+    def save_attachment(file, request_no, section_name, attachment_no):
         original_filename = secure_filename(file.filename)
-        filename = f"{request_no}_{attachment_no}_{original_filename}"
+
+        filename = f"{request_no}_{section_name}_{attachment_no}_{original_filename}"
+
         file_path = os.path.join(Config.UPLOAD_FOLDER, filename)
 
         file.save(file_path)

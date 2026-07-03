@@ -10,8 +10,8 @@ class PowerPointExporter:
         os.makedirs(self.export_folder, exist_ok=True)
 
     def export(self, application, attachments):
-        prs = Presentation()
-
+        prs = Presentation(Config.PPT_TEMPLATE_PATH)
+        
         prs.slide_width = Inches(13.333)
         prs.slide_height = Inches(7.5)
 

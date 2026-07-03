@@ -20,23 +20,38 @@ class PCCIMService:
             INSERT INTO applications (
                 request_no,
                 apply_date,
+
                 title,
                 in_dn,
                 create_date,
                 close_date,
-                machine,
+                machine_or_tool,
                 module_name,
-                tmn,
                 department,
                 author,
+
                 problem_description,
+                problem_timeline,
+
                 action_taken,
-                impact_container,
+
+                impact,
+
+                container,
+
                 need_help,
-                root_cause,
-                solution
+
+                root_cause_description,
+                root_cause_possible_cause,
+                root_cause_troubleshooting_timeline,
+
+                solution,
+
+                implementation,
+
+                monitoring
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, application.to_tuple())
 
         conn.commit()
@@ -49,11 +64,14 @@ class PCCIMService:
         cursor.execute("""
             INSERT INTO attachments (
                 request_no,
-                image_no,
+                section_name,
+                attachment_no,
                 file_path,
+                original_file_name,
+                file_type,
                 remark
             )
-            VALUES (?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """, attachment.to_tuple())
 
         conn.commit()
@@ -66,13 +84,13 @@ class PCCIMService:
             SELECT
                 request_no,
                 apply_date,
+
                 title,
                 in_dn,
                 create_date,
                 close_date,
-                machine,
+                machine_or_tool,
                 module_name,
-                tmn,
                 department,
                 author
             FROM applications
@@ -101,17 +119,13 @@ class PCCIMService:
             sql += " AND close_date = ?"
             params.append(filters["close_date"])
 
-        if filters.get("machine"):
-            sql += " AND machine LIKE ?"
-            params.append(f"%{filters['machine']}%")
+        if filters.get("machine_or_tool"):
+            sql += " AND machine_or_tool LIKE ?"
+            params.append(f"%{filters['machine_or_tool']}%")
 
         if filters.get("module_name"):
             sql += " AND module_name LIKE ?"
             params.append(f"%{filters['module_name']}%")
-
-        if filters.get("tmn"):
-            sql += " AND tmn LIKE ?"
-            params.append(f"%{filters['tmn']}%")
 
         if filters.get("department"):
             sql += " AND department LIKE ?"
@@ -147,8 +161,22 @@ class PCCIMService:
             SELECT *
             FROM attachments
             WHERE request_no = ?
-            ORDER BY image_no
+            ORDER BY section_name, attachment_no
         """, (request_no,)).fetchall()
+
+        conn.close()
+        return rows
+
+    def get_attachments_by_section(self, request_no, section_name):
+        conn = self.db_manager.get_connection()
+
+        rows = conn.execute("""
+            SELECT *
+            FROM attachments
+            WHERE request_no = ?
+            AND section_name = ?
+            ORDER BY attachment_no
+        """, (request_no, section_name)).fetchall()
 
         conn.close()
         return rows

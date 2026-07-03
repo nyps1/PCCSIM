@@ -17,34 +17,60 @@ class DatabaseManager:
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS applications (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+
                 request_no TEXT UNIQUE NOT NULL,
                 apply_date TEXT,
+
                 title TEXT,
                 in_dn TEXT,
                 create_date TEXT,
                 close_date TEXT,
-                machine TEXT,
+                machine_or_tool TEXT,
                 module_name TEXT,
-                tmn TEXT,
                 department TEXT,
                 author TEXT,
+
                 problem_description TEXT,
+                problem_timeline TEXT,
+
                 action_taken TEXT,
-                impact_container TEXT,
+
+                impact TEXT,
+
+                container TEXT,
+
                 need_help TEXT,
-                root_cause TEXT,
+
+                root_cause_description TEXT,
+                root_cause_possible_cause TEXT,
+                root_cause_troubleshooting_timeline TEXT,
+
                 solution TEXT,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+
+                implementation TEXT,
+
+                monitoring TEXT,
+
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS attachments (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+
                 request_no TEXT NOT NULL,
-                image_no INTEGER,
-                file_path TEXT,
+
+                section_name TEXT NOT NULL,
+                attachment_no INTEGER,
+
+                file_path TEXT NOT NULL,
+                original_file_name TEXT,
+                file_type TEXT,
+
                 remark TEXT,
+
                 uploaded_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)

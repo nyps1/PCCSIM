@@ -3,9 +3,11 @@
 {% block content %}
 
 <section class="card">
+
     <h2>搜尋條件</h2>
 
-    <form method="GET" action="{{ url_for('search') }}">
+     <a href="{{url_for('search') }}">
+            </a>
         <div class="form-grid">
 
             <div class="form-group">
@@ -35,7 +37,7 @@
 
             <div class="form-group">
                 <label>Machine/Tool</label>
-                <input type="text" name="machine" value="{{ filters.machine }}">
+                <input type="text" name="machine_or_tool" value="{{ filters.machine_or_tool }}">
             </div>
 
             <div class="form-group">
@@ -49,11 +51,6 @@
             </div>
 
             <div class="form-group">
-                <label>TMN</label>
-                <input type="text" name="tmn" value="{{ filters.tmn }}">
-            </div>
-
-            <div class="form-group">
                 <label>Author</label>
                 <input type="text" name="author" value="{{ filters.author }}">
             </div>
@@ -61,10 +58,16 @@
         </div>
 
         <div class="button-area">
-            <a href="{{ url_for('search') }}" class="btn secondary">清除篩選</a>
-            <button type="submit" class="btn primary">搜尋</button>
+            <a href="{{url_for('search') }}"  class="btn secondary">
+                清除篩選
+            </a>
+
+            <button type="submit" class="btn primary">
+                搜尋
+            </button>
         </div>
     </form>
+
 </section>
 
 <section class="card">
@@ -81,7 +84,6 @@
                     <th>Close Date</th>
                     <th>Machine/Tool</th>
                     <th>Module Name</th>
-                    <th>TMN</th>
                     <th>Department</th>
                     <th>Author</th>
                     <th>操作</th>
@@ -97,19 +99,24 @@
                         <td>{{ row.in_dn }}</td>
                         <td>{{ row.create_date }}</td>
                         <td>{{ row.close_date }}</td>
-                        <td>{{ row.machine }}</td>
+                        <td>{{ row.machine_or_tool }}</td>
                         <td>{{ row.module_name }}</td>
-                        <td>{{ row.tmn }}</td>                        
                         <td>{{ row.department }}</td>
                         <td>{{ row.author }}</td>
                         <td>
-                            <a href="{{ url_for('detail', request_no=row.request_no) }}" class="link-btn">
-                                明細
-                            </a>
+                            <div class="table-action-buttons">
+                                <a href="{{ url_for('detail', request_no=row.request_no) }}" 
+                                    class="link-btn"
+                                >
+                                    明細
+                                </a>
 
-                            <a href="{{ url_for('export_ppt', request_no=row.request_no) }}" class="link-btn">
-                                匯出 PPT
-                            </a>
+                                <a href="{{url_for('export_ppt', request_no=row.request_no) }}" 
+                                    class="link-btn"
+                                >
+                                    匯出 PPT
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
