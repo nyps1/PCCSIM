@@ -23,6 +23,7 @@ ppt_exporter = PowerPointExporter(Config.EXPORT_FOLDER)
 
 ATTACHMENT_SECTIONS = [
     "problem",
+    "action_taken",
     "container",
     "root_cause",
     "implementation",
@@ -33,6 +34,7 @@ ATTACHMENT_SECTIONS = [
 
 SECTION_LABELS = {
     "problem": "Problem",
+    "action_taken": "Action Taken",
     "container": "Container",
     "root_cause": "Root Cause",
     "implementation": "Implementation",
@@ -60,8 +62,6 @@ def apply():
             "need_help",
             "root_cause_description",
             "solution",
-            "implementation",
-            "monitoring"
         ]
 
         for field in required_fields:

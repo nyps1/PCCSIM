@@ -6,8 +6,7 @@
 
     <h2>搜尋條件</h2>
 
-     <a href="{{url_for('search') }}">
-            </a>
+     
         <div class="form-grid">
 
             <div class="form-group">
@@ -62,9 +61,10 @@
                 清除篩選
             </a>
 
-            <button type="submit" class="btn primary">
+            <a href="{{url_for('search') }}" class="btn primary">
+            
                 搜尋
-            </button>
+            </a>
         </div>
     </form>
 

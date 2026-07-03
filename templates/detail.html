@@ -133,6 +133,12 @@
     <div class="detail-content">
         <p>{{ application.action_taken or "" }}</p>
     </div>
+
+    {{ render_attachments(
+        "action_taken",
+        "Action Taken",
+        attachments_by_section.get("action_taken", [])
+    ) }}
 </section>
 
 
