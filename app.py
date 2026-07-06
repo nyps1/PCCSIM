@@ -21,6 +21,7 @@ pccim_service = PCCIMService(db_manager)
 ppt_exporter = PowerPointExporter(Config.EXPORT_FOLDER)
 
 
+# Manual content sections attachments
 ATTACHMENT_SECTIONS = [
     "problem",
     "action_taken",
@@ -32,6 +33,7 @@ ATTACHMENT_SECTIONS = [
 ]
 
 
+# Display labels
 SECTION_LABELS = {
     "problem": "Problem",
     "action_taken": "Action Taken",
@@ -39,7 +41,8 @@ SECTION_LABELS = {
     "root_cause": "Root Cause",
     "implementation": "Implementation",
     "monitoring": "Monitoring",
-    "solution": "Solution"
+    "solution": "Solution",
+    "content_ppt": "Completed PPT"
 }
 
 
@@ -52,21 +55,46 @@ def index():
 def apply():
     if request.method == "POST":
 
-        required_fields = [
+        content_input_mode = request.form.get("content_input_mode", "manual").strip()
+
+        # Basic information required fields
+        basic_required_fields = [
             "title",
-            "author",
-            "problem_description",
-            "action_taken",
-            "impact",
-            "container",
-            "need_help",
-            "root_cause_description",
-            "solution",
+            "author"
         ]
 
-        for field in required_fields:
+        for field in basic_required_fields:
             if not request.form.get(field, "").strip():
-                return f"{field} 為必填欄位", 400
+                return f"{field} is required.", 400
+
+        # Manual mode required fields
+        if content_input_mode == "manual":
+            manual_required_fields = [
+                "problem_description",
+                "action_taken",
+                "impact",
+                "container",
+                "need_help",
+                "root_cause_description",
+                "solution"
+            ]
+
+            for field in manual_required_fields:
+                if not request.form.get(field, "").strip():
+                    return f"{field} is required.", 400
+
+        # PPT upload mode required fields
+        elif content_input_mode == "ppt":
+            content_ppt_file = request.files.get("content_ppt_file")
+
+            if not content_ppt_file or not content_ppt_file.filename:
+                return "Please upload the completed PPT file.", 400
+
+            if not FileHelper.allowed_attachment(content_ppt_file.filename):
+                return "Completed PPT file type is not supported. Please upload ppt or pptx.", 400
+
+        else:
+            return "Invalid content input mode.", 400
 
         request_no = pccim_service.generate_request_no()
         apply_date = pccim_service.get_today()
@@ -83,6 +111,8 @@ def apply():
             module_name=request.form.get("module_name", "").strip(),
             department=request.form.get("department", "").strip(),
             author=request.form.get("author", "").strip(),
+
+            content_input_mode=content_input_mode,
 
             problem_description=request.form.get("problem_description", "").strip(),
             problem_timeline=request.form.get("problem_timeline", "").strip(),
@@ -108,33 +138,60 @@ def apply():
 
         pccim_service.create_application(application)
 
-        for section in ATTACHMENT_SECTIONS:
-            for i in range(1, Config.MAX_IMAGE_COUNT + 1):
-                file = request.files.get(f"{section}_attachment_{i}")
-                remark = request.form.get(f"{section}_attachment_remark_{i}", "").strip()
+        # If user selected Upload Completed PPT mode
+        if content_input_mode == "ppt":
+            content_ppt_file = request.files.get("content_ppt_file")
+            content_ppt_remark = request.form.get("content_ppt_remark", "").strip()
 
-                if file and file.filename:
-                    if FileHelper.allowed_attachment(file.filename):
-                        saved_filename = FileHelper.save_attachment(
-                            file=file,
-                            request_no=request_no,
-                            section_name=section,
-                            attachment_no=i
-                        )
+            if content_ppt_file and content_ppt_file.filename:
+                saved_filename = FileHelper.save_attachment(
+                    file=content_ppt_file,
+                    request_no=request_no,
+                    section_name="content_ppt",
+                    attachment_no=1
+                )
 
-                        attachment = Attachment(
-                            request_no=request_no,
-                            section_name=section,
-                            attachment_no=i,
-                            file_path=saved_filename,
-                            original_file_name=file.filename,
-                            file_type=FileHelper.get_extension(file.filename),
-                            remark=remark
-                        )
+                attachment = Attachment(
+                    request_no=request_no,
+                    section_name="content_ppt",
+                    attachment_no=1,
+                    file_path=saved_filename,
+                    original_file_name=content_ppt_file.filename,
+                    file_type=FileHelper.get_extension(content_ppt_file.filename),
+                    remark=content_ppt_remark
+                )
 
-                        pccim_service.add_attachment(attachment)
-                    else:
-                        return f"{SECTION_LABELS.get(section, section)} 附件 {i} 檔案格式不支援，請上傳圖片或 PowerPoint。", 400
+                pccim_service.add_attachment(attachment)
+
+        # If user selected Manual Input mode
+        if content_input_mode == "manual":
+            for section in ATTACHMENT_SECTIONS:
+                for i in range(1, Config.MAX_IMAGE_COUNT + 1):
+                    file = request.files.get(f"{section}_attachment_{i}")
+                    remark = request.form.get(f"{section}_attachment_remark_{i}", "").strip()
+
+                    if file and file.filename:
+                        if FileHelper.allowed_attachment(file.filename):
+                            saved_filename = FileHelper.save_attachment(
+                                file=file,
+                                request_no=request_no,
+                                section_name=section,
+                                attachment_no=i
+                            )
+
+                            attachment = Attachment(
+                                request_no=request_no,
+                                section_name=section,
+                                attachment_no=i,
+                                file_path=saved_filename,
+                                original_file_name=file.filename,
+                                file_type=FileHelper.get_extension(file.filename),
+                                remark=remark
+                            )
+
+                            pccim_service.add_attachment(attachment)
+                        else:
+                            return f"{SECTION_LABELS.get(section, section)} attachment {i} file type is not supported.", 400
 
         return redirect(url_for("detail", request_no=request_no))
 
@@ -157,7 +214,8 @@ def search():
         "machine_or_tool": request.args.get("machine_or_tool", ""),
         "module_name": request.args.get("module_name", ""),
         "department": request.args.get("department", ""),
-        "author": request.args.get("author", "")
+        "author": request.args.get("author", ""),
+        "content_input_mode": request.args.get("content_input_mode", "")
     }
 
     rows = pccim_service.search_applications(filters)
@@ -175,11 +233,11 @@ def detail(request_no):
     attachments = pccim_service.get_attachments_by_request_no(request_no)
 
     if application is None:
-        return "找不到此申請單", 404
+        return "Application not found.", 404
 
     attachments_by_section = {}
 
-    for section in ATTACHMENT_SECTIONS:
+    for section in SECTION_LABELS.keys():
         attachments_by_section[section] = []
 
     for attachment in attachments:
@@ -206,7 +264,7 @@ def export_ppt(request_no):
     attachments = pccim_service.get_attachments_by_request_no(request_no)
 
     if application is None:
-        return "找不到此申請單", 404
+        return "Application not found.", 404
 
     output_path = ppt_exporter.export(application, attachments)
 

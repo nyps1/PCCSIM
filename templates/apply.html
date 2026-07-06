@@ -5,25 +5,24 @@
 {% macro attachment_block(section_key, section_title, open_default=False) %}
 <details class="attachment-collapse" {% if open_default %}open{% endif %}>
     <summary>
-        <span>{{ section_title }} 附件</span>
-        <small>點擊展開 / 收合</small>
+        <span>{{ section_title }} Attachments</span>
+        <small>Click to expand / collapse</small>
     </summary>
 
     <p class="section-hint">
-        支援圖片與 PowerPoint，最多可上傳 {{ max_image_count }} 個附件。
-        <br>
-        支援格式：png、jpg、jpeg、gif、bmp、webp、ppt、pptx
+        Supported file types: png, jpg, jpeg, gif, bmp, webp, ppt, pptx.
+        You can upload up to {{ max_image_count }} attachments.
     </p>
 
     <div class="image-grid">
         {% for i in range(1, max_image_count + 1) %}
         <div class="image-box">
             <div class="image-box-header">
-                <span class="image-badge">{{ section_title }} 附件 {{ i }}</span>
+                <span class="image-badge">{{ section_title }} Attachment {{ i }}</span>
             </div>
 
             <div class="form-group">
-                <label for="{{ section_key }}_attachment_{{ i }}">選擇附件</label>
+                <label for="{{ section_key }}_attachment_{{ i }}">Select Attachment</label>
                 <input
                     type="file"
                     id="{{ section_key }}_attachment_{{ i }}"
@@ -33,11 +32,11 @@
             </div>
 
             <div class="form-group">
-                <label for="{{ section_key }}_attachment_remark_{{ i }}">附件備註</label>
+                <label for="{{ section_key }}_attachment_remark_{{ i }}">Attachment Remark</label>
                 <textarea
                     id="{{ section_key }}_attachment_remark_{{ i }}"
                     name="{{ section_key }}_attachment_remark_{{ i }}"
-                    placeholder="請輸入 {{ section_title }} 附件 {{ i }} 的備註"
+                    placeholder="Enter remark for {{ section_title }} attachment {{ i }}"
                 ></textarea>
             </div>
         </div>
@@ -46,21 +45,22 @@
 </details>
 {% endmacro %}
 
+
 <form method="POST" enctype="multipart/form-data">
 
-    <!-- 基本資訊 -->
+    <!-- Basic Information -->
     <section class="card">
-        <h2>基本資訊</h2>
+        <h2>Basic Information</h2>
 
         <div class="form-grid">
             <div class="form-group">
                 <label>Apply Number</label>
-                <input type="text" value="系統自動產生" readonly>
+                <input type="text" value="Auto Generated" readonly>
             </div>
 
             <div class="form-group">
                 <label>Apply Date</label>
-                <input type="text" value="系統自動產生" readonly>
+                <input type="text" value="Auto Generated" readonly>
             </div>
 
             <div class="form-group">
@@ -70,7 +70,7 @@
 
             <div class="form-group">
                 <label>IN/DN</label>
-                <input type="text" name="in_dn" placeholder="請輸入 IN/DN">
+                <input type="text" name="in_dn" placeholder="Enter IN/DN">
             </div>
 
             <div class="form-group">
@@ -105,149 +105,334 @@
         </div>
     </section>
 
-    <!-- Problem -->
+
+    <!-- Content Input Mode -->
     <section class="card">
-        <h2>Problem</h2>
+        <h2>Content Input Mode</h2>
 
-        <div class="content-grid">
-            <div class="form-group">
-                <label>Problem Description <span class="required">*</span></label>
-                <textarea name="problem_description" required></textarea>
-            </div>
+        <div class="form-group">
+            <label>How would you like to provide the content? <span class="required">*</span></label>
 
-            <div class="form-group">
-                <label>Problem Timeline</label>
-                <textarea name="problem_timeline"></textarea>
-            </div>
-        </div>
+            <div class="radio-group">
+                <label>
+                    <input
+                        type="radio"
+                        name="content_input_mode"
+                        value="manual"
+                        checked
+                    >
+                    Manual Input
+                </label>
 
-        {{ attachment_block("problem", "Problem", True) }}
-    </section>
-
-    <!-- Action Taken -->
-    <!-- Action Taken -->
-    <section class="card">
-        <h2>Action Taken</h2>
-
-        <div class="content-grid single">
-            <div class="form-group">
-                <label>Action Taken <span class="required">*</span></label>
-                <textarea name="action_taken" required></textarea>
-            </div>
-        </div>
-
-        {{ attachment_block("action_taken", "Action Taken", False) }}
-    </section>
-
-    <!-- Impact -->
-    <section class="card">
-        <h2>Impact</h2>
-
-        <div class="content-grid single">
-            <div class="form-group">
-                <label>Impact <span class="required">*</span></label>
-                <textarea name="impact" required></textarea>
+                <label>
+                    <input
+                        type="radio"
+                        name="content_input_mode"
+                        value="ppt"
+                    >
+                    Upload Completed PPT
+                </label>
             </div>
         </div>
     </section>
 
-    <!-- Container -->
-    <section class="card">
-        <h2>Container</h2>
 
-        <div class="content-grid single">
-            <div class="form-group">
-                <label>Container <span class="required">*</span></label>
-                <textarea name="container" required></textarea>
+    <!-- Completed PPT Upload Block -->
+    <div id="contentPptBlock" style="display: none;">
+        <section class="card">
+            <h2>Upload Completed PPT</h2>
+
+            <div class="content-grid single">
+                <div class="form-group">
+                    <label>Completed PPT File <span class="required">*</span></label>
+                    <input
+                        type="file"
+                        id="content_ppt_file"
+                        name="content_ppt_file"
+                        accept=".ppt,.pptx"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label>Completed PPT Remark</label>
+                    <textarea
+                        name="content_ppt_remark"
+                        placeholder="Enter remark for uploaded completed PPT"
+                    ></textarea>
+                </div>
             </div>
-        </div>
+        </section>
+    </div>
 
-        {{ attachment_block("container", "Container", False) }}
-    </section>
 
-    <!-- Need Help -->
-    <section class="card">
-        <h2>Need Help From PE/DE</h2>
+    <!-- Manual Content Block -->
+    <div id="manualContentBlock">
 
-        <div class="content-grid single">
-            <div class="form-group">
-                <label>Need Help From PE/DE <span class="required">*</span></label>
-                <textarea name="need_help" required></textarea>
-            </div>
-        </div>
-    </section>
+        <!-- Problem -->
+        <section class="card">
+            <h2>Problem</h2>
 
-    <!-- Root Cause -->
-    <section class="card">
-        <h2>Root Cause</h2>
+            <div class="content-grid">
+                <div class="form-group">
+                    <label>Problem Description <span class="required">*</span></label>
+                    <textarea
+                        id="problem_description"
+                        name="problem_description"
+                        placeholder="Enter problem description"
+                    ></textarea>
+                </div>
 
-        <div class="content-grid">
-            <div class="form-group">
-                <label>Root Cause Description <span class="required">*</span></label>
-                <textarea name="root_cause_description" required></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Root Cause Possible Cause</label>
-                <textarea name="root_cause_possible_cause"></textarea>
+                <div class="form-group">
+                    <label>Problem Timeline</label>
+                    <textarea
+                        name="problem_timeline"
+                        placeholder="Enter problem timeline"
+                    ></textarea>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label>Root Cause Troubleshooting Timeline</label>
-                <textarea name="root_cause_troubleshooting_timeline"></textarea>
+            {{ attachment_block("problem", "Problem", True) }}
+        </section>
+
+
+        <!-- Action Taken -->
+        <section class="card">
+            <h2>Action Taken</h2>
+
+            <div class="content-grid single">
+                <div class="form-group">
+                    <label>Action Taken <span class="required">*</span></label>
+                    <textarea
+                        id="action_taken"
+                        name="action_taken"
+                        placeholder="Enter action taken"
+                    ></textarea>
+                </div>
             </div>
-        </div>
 
-        {{ attachment_block("root_cause", "Root Cause", False) }}
-    </section>
+            {{ attachment_block("action_taken", "Action Taken", False) }}
+        </section>
 
-    <!-- Solution -->
-    <section class="card">
-        <h2>Solution</h2>
 
-        <div class="content-grid single">
-            <div class="form-group">
-                <label>Solution <span class="required">*</span></label>
-                <textarea name="solution" required></textarea>
+        <!-- Impact -->
+        <section class="card">
+            <h2>Impact</h2>
+
+            <div class="content-grid single">
+                <div class="form-group">
+                    <label>Impact <span class="required">*</span></label>
+                    <textarea
+                        id="impact"
+                        name="impact"
+                        placeholder="Enter impact"
+                    ></textarea>
+                </div>
             </div>
-        </div>
+        </section>
 
-        {{ attachment_block("solution", "Solution", False) }}
-    </section>
 
-    <!-- Implementation -->
-    <section class="card">
-        <h2>Implementation</h2>
+        <!-- Container -->
+        <section class="card">
+            <h2>Container</h2>
 
-        <div class="content-grid single">
-            <div class="form-group">
-                <label>Implementation</label>
-                <textarea name="implementation" ></textarea>
+            <div class="content-grid single">
+                <div class="form-group">
+                    <label>Container <span class="required">*</span></label>
+                    <textarea
+                        id="container"
+                        name="container"
+                        placeholder="Enter container information"
+                    ></textarea>
+                </div>
             </div>
-        </div>
 
-        {{ attachment_block("implementation", "Implementation", False) }}
-    </section>
+            {{ attachment_block("container", "Container", False) }}
+        </section>
 
-    <!-- Monitoring -->
-    <section class="card">
-        <h2>Monitoring</h2>
 
-        <div class="content-grid single">
-            <div class="form-group">
-                <label>Monitoring</label>
-                <textarea name="monitoring"></textarea>
+        <!-- Need Help -->
+        <section class="card">
+            <h2>Need Help From PE/DE</h2>
+
+            <div class="content-grid single">
+                <div class="form-group">
+                    <label>Need Help From PE/DE <span class="required">*</span></label>
+                    <textarea
+                        id="need_help"
+                        name="need_help"
+                        placeholder="Enter support needed from PE/DE"
+                    ></textarea>
+                </div>
             </div>
-        </div>
+        </section>
 
-        {{ attachment_block("monitoring", "Monitoring", False) }}
-    </section>
+
+        <!-- Root Cause -->
+        <section class="card">
+            <h2>Root Cause</h2>
+
+            <div class="content-grid">
+                <div class="form-group">
+                    <label>Root Cause Description <span class="required">*</span></label>
+                    <textarea
+                        id="root_cause_description"
+                        name="root_cause_description"
+                        placeholder="Enter root cause description"
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Root Cause Possible Cause</label>
+                    <textarea
+                        name="root_cause_possible_cause"
+                        placeholder="Enter possible cause"
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Root Cause Troubleshooting Timeline</label>
+                    <textarea
+                        name="root_cause_troubleshooting_timeline"
+                        placeholder="Enter troubleshooting timeline"
+                    ></textarea>
+                </div>
+            </div>
+
+            {{ attachment_block("root_cause", "Root Cause", False) }}
+        </section>
+
+
+        <!-- Solution -->
+        <section class="card">
+            <h2>Solution</h2>
+
+            <div class="content-grid single">
+                <div class="form-group">
+                    <label>Solution <span class="required">*</span></label>
+                    <textarea
+                        id="solution"
+                        name="solution"
+                        placeholder="Enter solution"
+                    ></textarea>
+                </div>
+            </div>
+
+            {{ attachment_block("solution", "Solution", False) }}
+        </section>
+
+
+        <!-- Implementation -->
+        <section class="card">
+            <h2>Implementation</h2>
+
+            <div class="content-grid single">
+                <div class="form-group">
+                    <label>Implementation</label>
+                    <textarea
+                        name="implementation"
+                        placeholder="Enter implementation details"
+                    ></textarea>
+                </div>
+            </div>
+
+            {{ attachment_block("implementation", "Implementation", False) }}
+        </section>
+
+
+        <!-- Monitoring -->
+        <section class="card">
+            <h2>Monitoring</h2>
+
+            <div class="content-grid single">
+                <div class="form-group">
+                    <label>Monitoring</label>
+                    <textarea
+                        name="monitoring"
+                        placeholder="Enter monitoring plan or result"
+                    ></textarea>
+                </div>
+            </div>
+
+            {{ attachment_block("monitoring", "Monitoring", False) }}
+        </section>
+
+    </div>
+
 
     <div class="button-area">
-        <button type="reset" class="btn secondary">清除</button>
-        <button type="submit" class="btn primary">送出申請</button>
+        <button type="reset" class="btn secondary">Clear</button>
+        <button type="submit" class="btn primary">Submit Application</button>
     </div>
 
 </form>
+
+
+<script>
+    function setFieldsDisabled(container, disabled) {
+        const fields = container.querySelectorAll("input, textarea, select");
+
+        fields.forEach(function (field) {
+            field.disabled = disabled;
+        });
+    }
+
+    function toggleContentInputMode() {
+        const selectedMode = document.querySelector(
+            'input[name="content_input_mode"]:checked'
+        ).value;
+
+        const manualBlock = document.getElementById("manualContentBlock");
+        const pptBlock = document.getElementById("contentPptBlock");
+        const contentPptFile = document.getElementById("content_ppt_file");
+
+        const manualRequiredFields = [
+            "problem_description",
+            "action_taken",
+            "impact",
+            "container",
+            "need_help",
+            "root_cause_description",
+            "solution"
+        ];
+
+        if (selectedMode === "manual") {
+            manualBlock.style.display = "block";
+            pptBlock.style.display = "none";
+
+            setFieldsDisabled(manualBlock, false);
+            setFieldsDisabled(pptBlock, true);
+
+            contentPptFile.required = false;
+
+            manualRequiredFields.forEach(function (fieldId) {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.required = true;
+                }
+            });
+        } else {
+            manualBlock.style.display = "none";
+            pptBlock.style.display = "block";
+
+            setFieldsDisabled(manualBlock, true);
+            setFieldsDisabled(pptBlock, false);
+
+            contentPptFile.required = true;
+
+            manualRequiredFields.forEach(function (fieldId) {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.required = false;
+                }
+            });
+        }
+    }
+
+    document.querySelectorAll('input[name="content_input_mode"]').forEach(function (radio) {
+        radio.addEventListener("change", toggleContentInputMode);
+    });
+
+    toggleContentInputMode();
+</script>
 
 {% endblock %}

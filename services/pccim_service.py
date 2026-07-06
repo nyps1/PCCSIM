@@ -30,6 +30,8 @@ class PCCIMService:
                 department,
                 author,
 
+                content_input_mode,
+
                 problem_description,
                 problem_timeline,
 
@@ -51,7 +53,7 @@ class PCCIMService:
 
                 monitoring
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, application.to_tuple())
 
         conn.commit()
@@ -92,7 +94,8 @@ class PCCIMService:
                 machine_or_tool,
                 module_name,
                 department,
-                author
+                author,
+                content_input_mode
             FROM applications
             WHERE 1 = 1
         """
@@ -134,6 +137,10 @@ class PCCIMService:
         if filters.get("author"):
             sql += " AND author LIKE ?"
             params.append(f"%{filters['author']}%")
+
+        if filters.get("content_input_mode"):
+            sql += " AND content_input_mode = ?"
+            params.append(filters["content_input_mode"])
 
         sql += " ORDER BY id DESC"
 

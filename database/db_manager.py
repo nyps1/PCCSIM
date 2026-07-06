@@ -30,6 +30,8 @@ class DatabaseManager:
                 department TEXT,
                 author TEXT,
 
+                content_input_mode TEXT DEFAULT 'manual',
+
                 problem_description TEXT,
                 problem_timeline TEXT,
 

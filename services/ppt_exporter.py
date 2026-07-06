@@ -13,8 +13,17 @@ class PowerPointExporter:
     IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"}
     PPT_EXTS = {".ppt", ".pptx"}
 
+    # 圖片放大比例
+    # 1.0 = 跟 PowerPoint placeholder 一樣大
+    # 1.25 = 放大 25%
+    # 1.5 = 放大 50%
+    IMAGE_SCALE = 1.25
+
+    DEBUG_IMAGE_PLACEHOLDER = True
+
     SECTION_LABELS = {
         "problem": "Problem",
+        "problem_ppt": "Problem PPT",
         "action_taken": "Action Taken",
         "container": "Container",
         "root_cause": "Root Cause",
@@ -70,7 +79,7 @@ class PowerPointExporter:
 
         text = str(value)
 
-        # 修正 PowerPoint 顯示 _x000D_ 的問題
+        # Fix PowerPoint _x000D_ issue
         text = text.replace("\r\n", "\n")
         text = text.replace("\r", "\n")
         text = text.replace("_x000D_", "\n")
@@ -127,6 +136,25 @@ class PowerPointExporter:
     # --------------------------------------------------
 
     def _build_placeholder_mapping(self, application, attachments_by_section):
+        problem_input_mode = self._value(application, "problem_input_mode", "manual")
+
+        if problem_input_mode == "ppt":
+            problem_description = "Problem information was provided by an uploaded PowerPoint file."
+            problem_timeline = ""
+            problem_attachment_list = self._build_attachment_text_list(
+                attachments_by_section.get("problem_ppt", [])
+            )
+        else:
+            problem_description = self._clean_text(
+                self._value(application, "problem_description")
+            )
+            problem_timeline = self._clean_text(
+                self._value(application, "problem_timeline")
+            )
+            problem_attachment_list = self._build_attachment_text_list(
+                attachments_by_section.get("problem", [])
+            )
+
         mapping = {
             "{{REQUEST_NO}}": self._clean_text(self._value(application, "request_no")),
             "{{APPLY_DATE}}": self._clean_text(self._value(application, "apply_date")),
@@ -140,32 +168,36 @@ class PowerPointExporter:
             "{{DEPARTMENT}}": self._clean_text(self._value(application, "department")),
             "{{AUTHOR}}": self._clean_text(self._value(application, "author")),
 
-            "{{PROBLEM_DESCRIPTION}}": self._clean_text(self._value(application, "problem_description")),
-            "{{PROBLEM_TIMELINE}}": self._clean_text(self._value(application, "problem_timeline")),
+            "{{PROBLEM_INPUT_MODE}}": self._clean_text(problem_input_mode),
+            "{{PROBLEM_DESCRIPTION}}": problem_description,
+            "{{PROBLEM_TIMELINE}}": problem_timeline,
+            "{{PROBLEM_ATTACHMENT_LIST}}": problem_attachment_list,
 
             "{{ACTION_TAKEN}}": self._clean_text(self._value(application, "action_taken")),
-
             "{{IMPACT}}": self._clean_text(self._value(application, "impact")),
-
             "{{CONTAINER}}": self._clean_text(self._value(application, "container")),
-
             "{{NEED_HELP}}": self._clean_text(self._value(application, "need_help")),
 
-            "{{ROOT_CAUSE_DESCRIPTION}}": self._clean_text(self._value(application, "root_cause_description")),
-            "{{ROOT_CAUSE_POSSIBLE_CAUSE}}": self._clean_text(self._value(application, "root_cause_possible_cause")),
+            "{{ROOT_CAUSE_DESCRIPTION}}": self._clean_text(
+                self._value(application, "root_cause_description")
+            ),
+            "{{ROOT_CAUSE_POSSIBLE_CAUSE}}": self._clean_text(
+                self._value(application, "root_cause_possible_cause")
+            ),
             "{{ROOT_CAUSE_TROUBLESHOOTING_TIMELINE}}": self._clean_text(
                 self._value(application, "root_cause_troubleshooting_timeline")
             ),
 
             "{{SOLUTION}}": self._clean_text(self._value(application, "solution")),
-
             "{{IMPLEMENTATION}}": self._clean_text(self._value(application, "implementation")),
-
             "{{MONITORING}}": self._clean_text(self._value(application, "monitoring")),
         }
 
         for section_key in self.SECTION_LABELS.keys():
             placeholder = "{{" + section_key.upper() + "_ATTACHMENT_LIST}}"
+
+            if placeholder == "{{PROBLEM_ATTACHMENT_LIST}}":
+                continue
 
             mapping[placeholder] = self._build_attachment_text_list(
                 attachments_by_section.get(section_key, [])
@@ -353,11 +385,13 @@ class PowerPointExporter:
                     index - 1
                 )
 
-        print("========== IMAGE PLACEHOLDER DEBUG START ==========")
-        print("Sections in attachments_by_section:", list(attachments_by_section.keys()))
+        if self.DEBUG_IMAGE_PLACEHOLDER:
+            print("========== IMAGE PLACEHOLDER DEBUG START ==========")
+            print("Sections in attachments_by_section:", list(attachments_by_section.keys()))
 
         for slide_index, slide in enumerate(prs.slides, start=1):
-            print(f"Checking slide {slide_index}")
+            if self.DEBUG_IMAGE_PLACEHOLDER:
+                print(f"Checking slide {slide_index}")
 
             for shape_index, shape in enumerate(list(slide.shapes), start=1):
                 if not getattr(shape, "has_text_frame", False):
@@ -371,7 +405,8 @@ class PowerPointExporter:
                 if not shape_text:
                     continue
 
-                print(f"Slide {slide_index}, Shape {shape_index}, Text: {shape_text}")
+                if self.DEBUG_IMAGE_PLACEHOLDER:
+                    print(f"Slide {slide_index}, Shape {shape_index}, Text: {shape_text}")
 
                 matched_placeholder = None
 
@@ -383,7 +418,8 @@ class PowerPointExporter:
                 if not matched_placeholder:
                     continue
 
-                print("Matched placeholder:", matched_placeholder)
+                if self.DEBUG_IMAGE_PLACEHOLDER:
+                    print("Matched placeholder:", matched_placeholder)
 
                 section_key, image_index = image_placeholder_mapping[matched_placeholder]
 
@@ -392,27 +428,31 @@ class PowerPointExporter:
                     if self._is_image_attachment(attachment)
                 ]
 
-                print("Section:", section_key)
-                print("Image attachment count:", len(image_attachments))
-                print("Image index:", image_index)
+                if self.DEBUG_IMAGE_PLACEHOLDER:
+                    print("Section:", section_key)
+                    print("Image attachment count:", len(image_attachments))
+                    print("Image index:", image_index)
 
                 if image_index >= len(image_attachments):
-                    print("No image attachment for this placeholder.")
+                    if self.DEBUG_IMAGE_PLACEHOLDER:
+                        print("No image attachment for this placeholder.")
                     shape.text = ""
                     continue
 
                 attachment = image_attachments[image_index]
                 image_path = self._get_attachment_full_path(attachment)
 
-                print("Image path:", image_path)
-                print("Image exists:", os.path.exists(image_path))
-                print("Placeholder left:", shape.left)
-                print("Placeholder top:", shape.top)
-                print("Placeholder width:", shape.width)
-                print("Placeholder height:", shape.height)
+                if self.DEBUG_IMAGE_PLACEHOLDER:
+                    print("Image path:", image_path)
+                    print("Image exists:", os.path.exists(image_path))
+                    print("Placeholder left:", shape.left)
+                    print("Placeholder top:", shape.top)
+                    print("Placeholder width:", shape.width)
+                    print("Placeholder height:", shape.height)
 
                 if not os.path.exists(image_path):
-                    print("Image file not found. Skip.")
+                    if self.DEBUG_IMAGE_PLACEHOLDER:
+                        print("Image file not found. Skip.")
                     shape.text = ""
                     continue
 
@@ -422,19 +462,18 @@ class PowerPointExporter:
                 height = shape.height
 
                 if width <= 0 or height <= 0:
-                    print("Invalid placeholder size. Skip.")
+                    if self.DEBUG_IMAGE_PLACEHOLDER:
+                        print("Invalid placeholder size. Skip.")
                     shape.text = ""
                     continue
 
-                # 移除 placeholder 文字框，避免遮住圖片
                 try:
                     element = shape._element
                     element.getparent().remove(element)
                 except Exception:
                     shape.text = ""
 
-                
-                scale = 7
+                scale = self.IMAGE_SCALE
 
                 new_width = int(width * scale)
                 new_height = int(height * scale)
@@ -442,21 +481,20 @@ class PowerPointExporter:
                 new_left = left - int((new_width - width) / 2)
                 new_top = top - int((new_height - height) / 2)
 
-
                 self._add_picture_fit(
-                    
                     slide=slide,
                     image_path=image_path,
                     left=new_left,
                     top=new_top,
                     max_width=new_width,
                     max_height=new_height
-
                 )
 
-                print("Image inserted successfully.")
+                if self.DEBUG_IMAGE_PLACEHOLDER:
+                    print("Image inserted successfully.")
 
-        print("========== IMAGE PLACEHOLDER DEBUG END ==========")
+        if self.DEBUG_IMAGE_PLACEHOLDER:
+            print("========== IMAGE PLACEHOLDER DEBUG END ==========")
 
     def _add_picture_fit(self, slide, image_path, left, top, max_width, max_height):
         if Image is None:

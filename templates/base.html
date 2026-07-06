@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>PCCIM</title>
 
-    <!-- 連接 static/style.css -->
+    <!-- Link to static/css/style.css -->
     <link
         rel="stylesheet"
         href="{{ url_for('static', filename='css/style.css') }}"
@@ -17,8 +17,8 @@
 </header>
 
 <nav>
-    <a href="{{ url_for('apply') }}">申請介面</a>
-    <a href="{{ url_for('search') }}">搜尋介面</a>
+    <a href="{{ url_for('apply') }}">Application</a>
+    <a href="{{ url_for('search') }}">Search</a>
 </nav>
 
 <main>

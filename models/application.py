@@ -12,6 +12,8 @@ class Application:
         department,
         author,
 
+        content_input_mode,
+
         problem_description,
         problem_timeline,
 
@@ -44,6 +46,8 @@ class Application:
         self.module_name = module_name
         self.department = department
         self.author = author
+
+        self.content_input_mode = content_input_mode
 
         self.problem_description = problem_description
         self.problem_timeline = problem_timeline
@@ -79,6 +83,8 @@ class Application:
             self.module_name,
             self.department,
             self.author,
+
+            self.content_input_mode,
 
             self.problem_description,
             self.problem_timeline,

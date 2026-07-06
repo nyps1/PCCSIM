@@ -5,15 +5,15 @@
 {% macro render_attachments(section_key, section_title, section_attachments) %}
 <details class="attachment-collapse">
     <summary>
-        <span>{{ section_title }} 附件</span>
-        <small>點擊展開 / 收合</small>
+        <span>{{ section_title }} Attachments</span>
+        <small>Click to expand / collapse</small>
     </summary>
 
     {% if section_attachments %}
         <div class="attachment-grid">
             {% for attachment in section_attachments %}
             <div class="attachment-card">
-                <h4>{{ section_title }} 附件 {{ attachment.attachment_no }}</h4>
+                <h4>{{ section_title }} Attachment {{ attachment.attachment_no }}</h4>
 
                 {% set filename = attachment.file_path.lower() %}
 
@@ -32,7 +32,7 @@
                         <a href="{{ url_for('download_attachment', filename=attachment.file_path) }}"
                             class="link-btn"
                         >
-                            下載圖片
+                            Download Image
                         </a>
                     </div>
 
@@ -42,7 +42,7 @@
                         <div class="ppt-icon">PPT</div>
 
                         <div class="ppt-info">
-                            <p><strong>PowerPoint 附件</strong></p>
+                            <p><strong>PowerPoint Attachment</strong></p>
 
                             <p>
                                 {{ attachment.original_file_name or attachment.file_path }}
@@ -51,32 +51,32 @@
                             <a href="{{ attachment.original_file_name or attachment.file_path }}"
                                 class="link-btn"
                             >
-                                下載 PowerPoint
+                                Download PowerPoint
                             </a>
                         </div>
                     </div>
 
                 {% else %}
 
-                    <p>不支援預覽此附件。</p>
+                    <p>Preview is not supported for this attachment.</p>
 
                     <a href="{{ url_for('download_attachment', filename=attachment.file_path) }}"
-                        class="link-btn"
-                    >
-                        下載附件
+                            class="link-btn"
+                        >
+                        Download Attachment
                     </a>
 
                 {% endif %}
 
                 <p>
-                    <strong>備註：</strong>
+                    <strong>Remark:</strong>
                     {{ attachment.remark or "" }}
                 </p>
             </div>
             {% endfor %}
         </div>
     {% else %}
-        <p class="no-data">此區塊沒有上傳附件。</p>
+        <p class="no-data">No attachments uploaded for this section.</p>
     {% endif %}
 </details>
 {% endmacro %}
@@ -84,29 +84,58 @@
 
 <section class="card">
     <div class="title-row">
-        <h2>申請明細</h2>
-
-        <a href="{{ url_for('export_ppt', request_no=application.request_no) }}"
-            class="btn primary"
-        >
-            匯出 PowerPoint
-        </a>
+        <h2>Application Detail</h2>
+        {% if application.content_input_mode != "ppt" %}
+            <a href="{{ url_for('export_ppt', request_no=application.request_no) }}"
+                class="btn primary"
+            >
+                Export PowerPoint
+            </a>
+        {% endif %}
     </div>
 
     <div class="detail-grid">
-        <div><strong>申請單號：</strong>{{ application.request_no }}</div>
-        <div><strong>申請日期：</strong>{{ application.apply_date }}</div>
-        <div><strong>Title：</strong>{{ application.title }}</div>
-        <div><strong>IN/DN：</strong>{{ application.in_dn or "" }}</div>
-        <div><strong>Create Date：</strong>{{ application.create_date or "" }}</div>
-        <div><strong>Close Date：</strong>{{ application.close_date or "" }}</div>
-        <div><strong>Machine/Tool：</strong>{{ application.machine_or_tool or "" }}</div>
-        <div><strong>Module Name：</strong>{{ application.module_name or "" }}</div>
-        <div><strong>Department：</strong>{{ application.department or "" }}</div>
-        <div><strong>Author：</strong>{{ application.author or "" }}</div>
+        <div><strong>Request No:</strong> {{ application.request_no }}</div>
+        <div><strong>Apply Date:</strong> {{ application.apply_date }}</div>
+        <div><strong>Title:</strong> {{ application.title }}</div>
+        <div><strong>IN/DN:</strong> {{ application.in_dn or "" }}</div>
+        <div><strong>Create Date:</strong> {{ application.create_date or "" }}</div>
+        <div><strong>Close Date:</strong> {{ application.close_date or "" }}</div>
+        <div><strong>Machine/Tool:</strong> {{ application.machine_or_tool or "" }}</div>
+        <div><strong>Module Name:</strong> {{ application.module_name or "" }}</div>
+        <div><strong>Department:</strong> {{ application.department or "" }}</div>
+        <div><strong>Author:</strong> {{ application.author or "" }}</div>
+        <div>
+            <strong>Content Input Mode:</strong>
+            {% if application.content_input_mode == "ppt" %}
+                Uploaded Completed PPT
+            {% else %}
+                Manual Input
+            {% endif %}
+        </div>
     </div>
 </section>
 
+
+{% if application.content_input_mode == "ppt" %}
+
+<section class="card">
+    <h2>Uploaded Completed PPT</h2>
+
+    <div class="detail-content">
+        <p>
+            The content information was provided by an uploaded completed PowerPoint file.
+        </p>
+    </div>
+
+    {{ render_attachments(
+        "content_ppt",
+        "Completed PPT",
+        attachments_by_section.get("content_ppt", [])
+    ) }}
+</section>
+
+{% else %}
 
 <section class="card">
     <h2>Problem</h2>
@@ -240,5 +269,7 @@
         attachments_by_section.get("monitoring", [])
     ) }}
 </section>
+
+{% endif %}
 
 {% endblock %}
