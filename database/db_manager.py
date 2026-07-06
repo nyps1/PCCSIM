@@ -77,5 +77,34 @@ class DatabaseManager:
             )
         """)
 
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS application_edit_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                request_no TEXT NOT NULL,
+
+                modifier_department TEXT NOT NULL,
+                modifier_author TEXT NOT NULL,
+
+                edit_summary TEXT,
+
+                edited_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
         conn.commit()
         conn.close()
+
+
+"""
+application table right now
+
+application_edit_logs
+│
+├── id
+├── request_no
+├── modifier_department
+├── modifier_author
+├── edit_summary
+└── edited_at
+"""

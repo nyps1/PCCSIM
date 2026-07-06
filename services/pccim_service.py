@@ -59,6 +59,82 @@ class PCCIMService:
         conn.commit()
         conn.close()
 
+    def update_application(self, request_no, data):
+        conn = self.db_manager.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE applications
+            SET
+                title = ?,
+                in_dn = ?,
+                create_date = ?,
+                close_date = ?,
+                machine_or_tool = ?,
+                module_name = ?,
+                department = ?,
+                author = ?,
+
+                problem_description = ?,
+                problem_timeline = ?,
+
+                action_taken = ?,
+
+                impact = ?,
+
+                container = ?,
+
+                need_help = ?,
+
+                root_cause_description = ?,
+                root_cause_possible_cause = ?,
+                root_cause_troubleshooting_timeline = ?,
+
+                solution = ?,
+
+                implementation = ?,
+
+                monitoring = ?,
+
+                updated_at = CURRENT_TIMESTAMP
+            WHERE request_no = ?
+        """, (
+            data.get("title", ""),
+            data.get("in_dn", ""),
+            data.get("create_date", ""),
+            data.get("close_date", ""),
+            data.get("machine_or_tool", ""),
+            data.get("module_name", ""),
+            data.get("department", ""),
+            data.get("author", ""),
+
+            data.get("problem_description", ""),
+            data.get("problem_timeline", ""),
+
+            data.get("action_taken", ""),
+
+            data.get("impact", ""),
+
+            data.get("container", ""),
+
+            data.get("need_help", ""),
+
+            data.get("root_cause_description", ""),
+            data.get("root_cause_possible_cause", ""),
+            data.get("root_cause_troubleshooting_timeline", ""),
+
+            data.get("solution", ""),
+
+            data.get("implementation", ""),
+
+            data.get("monitoring", ""),
+
+            request_no
+        ))
+
+        conn.commit()
+        conn.close()
+
     def add_attachment(self, attachment):
         conn = self.db_manager.get_connection()
         cursor = conn.cursor()
@@ -78,6 +154,47 @@ class PCCIMService:
 
         conn.commit()
         conn.close()
+
+    def add_edit_log(
+        self,
+        request_no,
+        modifier_department,
+        modifier_author,
+        edit_summary
+    ):
+        conn = self.db_manager.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            INSERT INTO application_edit_logs (
+                request_no,
+                modifier_department,
+                modifier_author,
+                edit_summary
+            )
+            VALUES (?, ?, ?, ?)
+        """, (
+            request_no,
+            modifier_department,
+            modifier_author,
+            edit_summary
+        ))
+
+        conn.commit()
+        conn.close()
+
+    def get_edit_logs_by_request_no(self, request_no):
+        conn = self.db_manager.get_connection()
+
+        rows = conn.execute("""
+            SELECT *
+            FROM application_edit_logs
+            WHERE request_no = ?
+            ORDER BY edited_at DESC
+        """, (request_no,)).fetchall()
+
+        conn.close()
+        return rows
 
     def search_applications(self, filters):
         conn = self.db_manager.get_connection()
