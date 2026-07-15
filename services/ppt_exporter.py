@@ -25,7 +25,7 @@ class PowerPointExporter:
         "problem": "Problem",
         "problem_ppt": "Problem PPT",
         "action_taken": "Action Taken",
-        "container": "Container",
+        "container": "Containment",
         "root_cause": "Root Cause",
         "solution": "Solution",
         "implementation": "Implementation",
