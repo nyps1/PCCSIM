@@ -2,10 +2,12 @@
 
 本專案是一個基於 Flask 框架開發的內部問題追蹤與對策管理系統。提供使用者建立、查詢、編輯問題報告，並支援將系統資訊與附件直接匯出為 PowerPoint (.pptx) 格式的報告簡報。
 
-## 系統架構與功能
+## 系統架構與設計模式
 
-- **後端架構**：使用 Flask 處理 HTTP 請求與路由。
-- **資料庫**：採用 SQLite 作為資料儲存，並使用 `DatabaseManager` 進行連線管理與 CRUD 操作。
+- **後端架構 (Controller)**：使用 Flask 處理 HTTP 請求與路由。透過 **Dependency Injection (依賴注入)** 降低與服務層的耦合。
+- **資料庫 (Factory Pattern)**：採用 SQLite 作為資料儲存，並使用 `DatabaseManager` 作為工廠動態提供獨立連線，避免 Multi-threading 的 Concurrency Safety 問題。
+- **商業邏輯 (Service / Repository Pattern)**：將所有資料庫 CRUD 操作封裝於 `PCCIMService` 中，達成 Controller 與資料庫的完美解耦。
+- **資料模型 (DTO Pattern)**：利用 `Application` 與 `Attachment` 等類別（並搭配 Python Type Hints）封裝請求資料。
 - **簡報匯出**：結合 `python-pptx` 與 `Pillow` 函式庫，將表單資訊與附件圖片精確填入 PowerPoint 模板中。
 
 ## 環境依賴
