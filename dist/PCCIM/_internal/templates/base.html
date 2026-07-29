@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PCCSIM</title>
+
+    <!-- Link to static/css/style.css -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+<body>
+
+<header>
+    PCCSIM
+</header>
+
+<nav>
+    <a href="{{ url_for('apply') }}">Application</a>
+    <a href="{{ url_for('search') }}">Search</a>
+</nav>
+
+<main>
+    {% block content %}
+    {% endblock %}
+</main>
+
+</body>
+</html>

@@ -1,4 +1,12 @@
+import os
+import sys
+import socket
+import threading
+import webbrowser
+import multiprocessing
+
 from flask import Flask, render_template, request, redirect, url_for, send_file, send_from_directory
+
 from config import Config
 
 from database.db_manager import DatabaseManager
@@ -9,6 +17,55 @@ from models.attachment import Attachment
 from utils.file_helper import FileHelper
 
 
+# =========================
+# Server Config
+# =========================
+HOST = "0.0.0.0"
+PORT = 5000
+
+APP_NAME = "PCCSIM"
+
+# 如果你已經有申請好的內部網域，填在這裡
+# 例如：
+# INTERNAL_DOMAIN = "pccsim.xxx.com"
+# 如果沒有，先留空字串
+INTERNAL_DOMAIN = ""
+
+BROWSER_DELAY_SECONDS = 1.5
+
+
+def get_local_ip():
+    """
+    Get local LAN IP address.
+    Other users in the same internal network can use this IP with the port.
+    """
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+        s.close()
+        return local_ip
+    except Exception:
+        try:
+            return socket.gethostbyname(socket.gethostname())
+        except Exception:
+            return "127.0.0.1"
+
+
+LOCAL_IP = get_local_ip()
+
+LOCAL_URL = f"http://127.0.0.1:{PORT}/"
+NETWORK_URL = f"http://{LOCAL_IP}:{PORT}/"
+
+if INTERNAL_DOMAIN:
+    DOMAIN_URL = f"http://{INTERNAL_DOMAIN}:{PORT}/"
+else:
+    DOMAIN_URL = ""
+
+
+# =========================
+# Flask App Initialization
+# =========================
 app = Flask(__name__)
 app.config.from_object(Config)
 
@@ -21,7 +78,84 @@ pccim_service = PCCIMService(db_manager)
 ppt_exporter = PowerPointExporter(Config.EXPORT_FOLDER)
 
 
+# =========================
+# Auto Open Browser
+# =========================
+def print_access_urls():
+    print("")
+    print("========================================")
+    print(f"{APP_NAME} Web Server Started")
+    print("========================================")
+    print("Local access:")
+    print(f"  {LOCAL_URL}")
+    print("")
+    print("Internal network access:")
+    print(f"  {NETWORK_URL}")
+
+    if DOMAIN_URL:
+        print("")
+        print("Domain access:")
+        print(f"  {DOMAIN_URL}")
+
+    print("========================================")
+    print("")
+
+
+def open_browser():
+    try:
+        # 自己這台筆電自動開本機網址
+        webbrowser.open_new(LOCAL_URL)
+    except Exception as exc:
+        app.logger.exception(
+            "Failed to open browser automatically: %s",
+            exc,
+        )
+
+
+def schedule_browser_open():
+    timer = threading.Timer(
+        BROWSER_DELAY_SECONDS,
+        open_browser,
+    )
+    timer.daemon = True
+    timer.start()
+
+
+def main():
+    is_frozen = getattr(sys, "frozen", False)
+
+    if is_frozen:
+        # PyInstaller exe mode.
+        # Do not use reloader to avoid duplicate process and duplicate browser tabs.
+        print_access_urls()
+        schedule_browser_open()
+
+        app.run(
+            host=HOST,
+            port=PORT,
+            debug=False,
+            use_reloader=False,
+        )
+
+    else:
+        # Development mode.
+        # Werkzeug reloader starts parent and child process.
+        # Only child process should open browser and print access URLs.
+        if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+            print_access_urls()
+            schedule_browser_open()
+
+        app.run(
+            host=HOST,
+            port=PORT,
+            debug=True,
+            use_reloader=True,
+        )
+
+
+# =========================
 # Manual content sections attachments
+# =========================
 ATTACHMENT_SECTIONS = [
     "problem",
     "action_taken",
@@ -29,11 +163,13 @@ ATTACHMENT_SECTIONS = [
     "root_cause",
     "implementation",
     "monitoring",
-    "solution"
+    "solution",
 ]
 
 
+# =========================
 # Display labels
+# =========================
 SECTION_LABELS = {
     "problem": "Problem",
     "action_taken": "Action Taken",
@@ -42,10 +178,13 @@ SECTION_LABELS = {
     "implementation": "Implementation",
     "monitoring": "Monitoring",
     "solution": "Solution",
-    "content_ppt": "Completed PPT"
+    "content_ppt": "Completed PPT",
 }
 
 
+# =========================
+# Routes
+# =========================
 @app.route("/")
 def index():
     return redirect(url_for("apply"))
@@ -60,7 +199,7 @@ def apply():
         # Basic information required fields
         basic_required_fields = [
             "title",
-            "author"
+            "author",
         ]
 
         for field in basic_required_fields:
@@ -76,7 +215,7 @@ def apply():
                 "container",
                 "need_help",
                 "root_cause_description",
-                "solution"
+                "solution",
             ]
 
             for field in manual_required_fields:
@@ -133,7 +272,7 @@ def apply():
 
             implementation=request.form.get("implementation", "").strip(),
 
-            monitoring=request.form.get("monitoring", "").strip()
+            monitoring=request.form.get("monitoring", "").strip(),
         )
 
         pccim_service.create_application(application)
@@ -148,7 +287,7 @@ def apply():
                     file=content_ppt_file,
                     request_no=request_no,
                     section_name="content_ppt",
-                    attachment_no=1
+                    attachment_no=1,
                 )
 
                 attachment = Attachment(
@@ -158,7 +297,7 @@ def apply():
                     file_path=saved_filename,
                     original_file_name=content_ppt_file.filename,
                     file_type=FileHelper.get_extension(content_ppt_file.filename),
-                    remark=content_ppt_remark
+                    remark=content_ppt_remark,
                 )
 
                 pccim_service.add_attachment(attachment)
@@ -176,7 +315,7 @@ def apply():
                                 file=file,
                                 request_no=request_no,
                                 section_name=section,
-                                attachment_no=i
+                                attachment_no=i,
                             )
 
                             attachment = Attachment(
@@ -186,7 +325,7 @@ def apply():
                                 file_path=saved_filename,
                                 original_file_name=file.filename,
                                 file_type=FileHelper.get_extension(file.filename),
-                                remark=remark
+                                remark=remark,
                             )
 
                             pccim_service.add_attachment(attachment)
@@ -199,7 +338,7 @@ def apply():
         "apply.html",
         max_image_count=Config.MAX_IMAGE_COUNT,
         attachment_sections=ATTACHMENT_SECTIONS,
-        section_labels=SECTION_LABELS
+        section_labels=SECTION_LABELS,
     )
 
 
@@ -215,7 +354,7 @@ def search():
         "module_name": request.args.get("module_name", ""),
         "department": request.args.get("department", ""),
         "author": request.args.get("author", ""),
-        "content_input_mode": request.args.get("content_input_mode", "")
+        "content_input_mode": request.args.get("content_input_mode", ""),
     }
 
     rows = pccim_service.search_applications(filters)
@@ -223,8 +362,9 @@ def search():
     return render_template(
         "search.html",
         rows=rows,
-        filters=filters
+        filters=filters,
     )
+
 
 @app.route("/detail/<request_no>")
 def detail(request_no):
@@ -256,8 +396,9 @@ def detail(request_no):
         attachments_by_section=attachments_by_section,
         attachment_sections=ATTACHMENT_SECTIONS,
         section_labels=SECTION_LABELS,
-        edit_logs=edit_logs
+        edit_logs=edit_logs,
     )
+
 
 @app.route("/edit/<request_no>", methods=["GET", "POST"])
 def edit(request_no):
@@ -295,7 +436,7 @@ def edit(request_no):
 
         basic_required_fields = [
             "title",
-            "author"
+            "author",
         ]
 
         for field in basic_required_fields:
@@ -310,7 +451,7 @@ def edit(request_no):
                 "container",
                 "need_help",
                 "root_cause_description",
-                "solution"
+                "solution",
             ]
 
             for field in manual_required_fields:
@@ -346,7 +487,7 @@ def edit(request_no):
 
             "implementation": request.form.get("implementation", "").strip(),
 
-            "monitoring": request.form.get("monitoring", "").strip()
+            "monitoring": request.form.get("monitoring", "").strip(),
         }
 
         pccim_service.update_application(request_no, update_data)
@@ -363,7 +504,7 @@ def edit(request_no):
                     file=content_ppt_file,
                     request_no=request_no,
                     section_name="content_ppt",
-                    attachment_no=1
+                    attachment_no=1,
                 )
 
                 attachment = Attachment(
@@ -373,7 +514,7 @@ def edit(request_no):
                     file_path=saved_filename,
                     original_file_name=content_ppt_file.filename,
                     file_type=FileHelper.get_extension(content_ppt_file.filename),
-                    remark=content_ppt_remark
+                    remark=content_ppt_remark,
                 )
 
                 pccim_service.add_attachment(attachment)
@@ -390,7 +531,7 @@ def edit(request_no):
                                 file=file,
                                 request_no=request_no,
                                 section_name=section,
-                                attachment_no=i
+                                attachment_no=i,
                             )
 
                             attachment = Attachment(
@@ -400,7 +541,7 @@ def edit(request_no):
                                 file_path=saved_filename,
                                 original_file_name=file.filename,
                                 file_type=FileHelper.get_extension(file.filename),
-                                remark=remark
+                                remark=remark,
                             )
 
                             pccim_service.add_attachment(attachment)
@@ -411,7 +552,7 @@ def edit(request_no):
             request_no=request_no,
             modifier_department=modifier_department,
             modifier_author=modifier_author,
-            edit_summary=edit_summary
+            edit_summary=edit_summary,
         )
 
         return redirect(url_for("detail", request_no=request_no))
@@ -423,8 +564,9 @@ def edit(request_no):
         attachments_by_section=attachments_by_section,
         attachment_sections=ATTACHMENT_SECTIONS,
         section_labels=SECTION_LABELS,
-        max_image_count=Config.MAX_IMAGE_COUNT
+        max_image_count=Config.MAX_IMAGE_COUNT,
     )
+
 
 @app.route("/export_ppt/<request_no>")
 def export_ppt(request_no):
@@ -439,7 +581,7 @@ def export_ppt(request_no):
     return send_file(
         output_path,
         as_attachment=True,
-        download_name=f"{request_no}.pptx"
+        download_name=f"{request_no}.pptx",
     )
 
 
@@ -453,9 +595,13 @@ def download_attachment(filename):
     return send_from_directory(
         Config.UPLOAD_FOLDER,
         filename,
-        as_attachment=True
+        as_attachment=True,
     )
 
 
+# =========================
+# Entry Point
+# =========================
 if __name__ == "__main__":
-    app.run(debug=True)
+    multiprocessing.freeze_support()
+    main()

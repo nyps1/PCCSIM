@@ -1,0 +1,426 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% macro attachment_block(section_key, section_title, open_default=False) %}
+<details class="attachment-collapse" {% if open_default %}open{% endif %}>
+    <summary>
+        <span>Add {{ section_title }} Attachments</span>
+        <small>Click to expand / collapse</small>
+    </summary>
+
+    <p class="section-hint">
+        You can add new attachments here. Existing attachments will be kept.
+        <br>
+        Supported file types: png, jpg, jpeg, gif, bmp, webp, ppt, pptx.
+    </p>
+
+    <div class="image-grid">
+        {% for i in range(1, max_image_count + 1) %}
+        <div class="image-box">
+            <div class="image-box-header">
+                <span class="image-badge">New {{ section_title }} Attachment {{ i }}</span>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ section_key }}_attachment_{{ i }}">Select Attachment</label>
+                <input
+                    type="file"
+                    id="{{ section_key }}_attachment_{{ i }}"
+                    name="{{ section_key }}_attachment_{{ i }}"
+                    accept="image/*,.ppt,.pptx"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="{{ section_key }}_attachment_remark_{{ i }}">Attachment Remark</label>
+                <textarea
+                    id="{{ section_key }}_attachment_remark_{{ i }}"
+                    name="{{ section_key }}_attachment_remark_{{ i }}"
+                    placeholder="Enter remark for {{ section_title }} attachment {{ i }}"
+                ></textarea>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</details>
+{% endmacro %}
+
+
+<form method="POST" enctype="multipart/form-data">
+
+    <!-- Page Title -->
+    <section class="card">
+        <div class="title-row">
+            <h2>Edit Application</h2>
+        </div>
+
+        <div class="detail-grid">
+            <div><strong>Request No:</strong> {{ application.request_no }}</div>
+            <div><strong>Apply Date:</strong> {{ application.apply_date }}</div>
+            <div>
+                <strong>Content Input Mode:</strong>
+                {% if application.content_input_mode == "ppt" %}
+                    Uploaded Completed PPT
+                {% else %}
+                    Manual Input
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Basic Information -->
+    <section class="card">
+        <h2>Basic Information</h2>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Title <span class="required">*</span></label>
+                <input
+                    type="text"
+                    name="title"
+                    value="{{ application.title or '' }}"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label>IN/DN</label>
+                <input
+                    type="text"
+                    name="in_dn"
+                    value="{{ application.in_dn or '' }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Create Date</label>
+                <input
+                    type="date"
+                    name="create_date"
+                    value="{{ application.create_date or '' }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Close Date</label>
+                <input
+                    type="date"
+                    name="close_date"
+                    value="{{ application.close_date or '' }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Machine/Tool</label>
+                <input
+                    type="text"
+                    name="machine_or_tool"
+                    value="{{ application.machine_or_tool or '' }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Module Name</label>
+                <input
+                    type="text"
+                    name="module_name"
+                    value="{{ application.module_name or '' }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Department</label>
+                <input
+                    type="text"
+                    name="department"
+                    value="{{ application.department or '' }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Author <span class="required">*</span></label>
+                <input
+                    type="text"
+                    name="author"
+                    value="{{ application.author or '' }}"
+                    required
+                >
+            </div>
+        </div>
+    </section>
+
+
+    {% if application.content_input_mode == "ppt" %}
+
+    <!-- Uploaded PPT Mode -->
+    <section class="card">
+        <h2>Uploaded Completed PPT</h2>
+
+        <p class="section-hint">
+            This application was created by uploading a completed PowerPoint file.
+            You can upload a new completed PPT here. The existing uploaded PPT will be kept as history.
+        </p>
+
+        <div class="content-grid single">
+            <div class="form-group">
+                <label>Upload New Completed PPT</label>
+                <input
+                    type="file"
+                    name="content_ppt_file"
+                    accept=".ppt,.pptx"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Completed PPT Remark</label>
+                <textarea
+                    name="content_ppt_remark"
+                    placeholder="Enter remark for the new uploaded completed PPT"
+                ></textarea>
+            </div>
+        </div>
+    </section>
+
+    {% else %}
+
+    <!-- Manual Mode: Problem -->
+    <section class="card">
+        <h2>Problem</h2>
+
+        <div class="content-grid">
+            <div class="form-group">
+                <label>Problem Description <span class="required">*</span></label>
+                <textarea
+                    name="problem_description"
+                    required
+                    placeholder="Enter problem description"
+                >{{ application.problem_description or "" }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Problem Timeline</label>
+                <textarea
+                    name="problem_timeline"
+                    placeholder="Enter problem timeline"
+                >{{ application.problem_timeline or "" }}</textarea>
+            </div>
+        </div>
+
+        {{ attachment_block("problem", "Problem", False) }}
+    </section>
+
+
+    <!-- Manual Mode: Action Taken -->
+    <section class="card">
+        <h2>Action Taken</h2>
+
+        <div class="content-grid single">
+            <div class="form-group">
+                <label>Action Taken <span class="required">*</span></label>
+                <textarea
+                    name="action_taken"
+                    required
+                    placeholder="Enter action taken"
+                >{{ application.action_taken or "" }}</textarea>
+            </div>
+        </div>
+
+        {{ attachment_block("action_taken", "Action Taken", False) }}
+    </section>
+
+
+    <!-- Manual Mode: Impact -->
+    <section class="card">
+        <h2>Impact</h2>
+
+        <div class="content-grid single">
+            <div class="form-group">
+                <label>Impact <span class="required">*</span></label>
+                <textarea
+                    name="impact"
+                    required
+                    placeholder="Enter impact"
+                >{{ application.impact or "" }}</textarea>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Manual Mode: Containment -->
+    <section class="card">
+        <h2>Containment</h2>
+
+        <div class="content-grid single">
+            <div class="form-group">
+                <label>Containment <span class="required">*</span></label>
+                <textarea
+                    name="container"
+                    required
+                    placeholder="Enter containment information"
+                >{{ application.container or "" }}</textarea>
+            </div>
+        </div>
+
+        {{ attachment_block("container", "Containment", False) }}
+    </section>
+
+
+    <!-- Manual Mode: Need Help -->
+    <section class="card">
+        <h2>Need Help From PE/DE</h2>
+
+        <div class="content-grid single">
+            <div class="form-group">
+                <label>Need Help From PE/DE <span class="required">*</span></label>
+                <textarea
+                    name="need_help"
+                    required
+                    placeholder="Enter support needed from PE/DE"
+                >{{ application.need_help or "" }}</textarea>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Manual Mode: Root Cause -->
+    <section class="card">
+        <h2>Root Cause</h2>
+
+        <div class="content-grid">
+            <div class="form-group">
+                <label>Root Cause Description <span class="required">*</span></label>
+                <textarea
+                    name="root_cause_description"
+                    required
+                    placeholder="Enter root cause description"
+                >{{ application.root_cause_description or "" }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Root Cause Possible Cause</label>
+                <textarea
+                    name="root_cause_possible_cause"
+                    placeholder="Enter possible cause"
+                >{{ application.root_cause_possible_cause or "" }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Root Cause Troubleshooting Timeline</label>
+                <textarea
+                    name="root_cause_troubleshooting_timeline"
+                    placeholder="Enter troubleshooting timeline"
+                >{{ application.root_cause_troubleshooting_timeline or "" }}</textarea>
+            </div>
+        </div>
+
+        {{ attachment_block("root_cause", "Root Cause", False) }}
+    </section>
+
+
+    <!-- Manual Mode: Solution -->
+    <section class="card">
+        <h2>Solution</h2>
+
+        <div class="content-grid single">
+            <div class="form-group">
+                <label>Solution <span class="required">*</span></label>
+                <textarea
+                    name="solution"
+                    required
+                    placeholder="Enter solution"
+                >{{ application.solution or "" }}</textarea>
+            </div>
+        </div>
+
+        {{ attachment_block("solution", "Solution", False) }}
+    </section>
+
+
+    <!-- Manual Mode: Implementation -->
+    <section class="card">
+        <h2>Implementation</h2>
+
+        <div class="content-grid single">
+            <div class="form-group">
+                <label>Implementation</label>
+                <textarea
+                    name="implementation"
+                    placeholder="Enter implementation details"
+                >{{ application.implementation or "" }}</textarea>
+            </div>
+        </div>
+
+        {{ attachment_block("implementation", "Implementation", False) }}
+    </section>
+
+
+    <!-- Manual Mode: Monitoring -->
+    <section class="card">
+        <h2>Monitoring</h2>
+
+        <div class="content-grid single">
+            <div class="form-group">
+                <label>Monitoring</label>
+                <textarea
+                    name="monitoring"
+                    placeholder="Enter monitoring plan or result"
+                >{{ application.monitoring or "" }}</textarea>
+            </div>
+        </div>
+
+        {{ attachment_block("monitoring", "Monitoring", False) }}
+    </section>
+
+    {% endif %}
+
+
+    <!-- Edit Information -->
+    <section class="card">
+        <h2>Edit Information</h2>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Modifier Department <span class="required">*</span></label>
+                <input
+                    type="text"
+                    name="modifier_department"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Modifier Author <span class="required">*</span></label>
+                <input
+                    type="text"
+                    name="modifier_author"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Edit Summary</label>
+                <textarea
+                    name="edit_summary"
+                    placeholder="Describe what was modified"
+                ></textarea>
+            </div>
+        </div>
+    </section>
+
+
+    <div class="button-area">
+        <a href="{{ url_for('search') }}" class="btn secondary">
+        
+            Cancel
+        </a>
+
+        <button type="submit" class="btn primary">
+            Save Changes
+        </button>
+    </div>
+
+</form>
+
+{% endblock %}

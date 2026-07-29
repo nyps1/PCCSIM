@@ -1,0 +1,67 @@
+('C:\\Users\\gibchen\\OneDrive - '
+ 'ASML\\Documents\\PCCIM\\build\\PCCIM\\PCCIM.pkg',
+ {'BINARY': True,
+  'DATA': True,
+  'EXECUTABLE': True,
+  'EXTENSION': True,
+  'PYMODULE': True,
+  'PYSOURCE': True,
+  'PYZ': False,
+  'SPLASH': True,
+  'SYMLINK': False},
+ [('pyi-contents-directory _internal', '', 'OPTION'),
+  ('PYZ-00.pyz',
+   'C:\\Users\\gibchen\\OneDrive - '
+   'ASML\\Documents\\PCCIM\\build\\PCCIM\\PYZ-00.pyz',
+   'PYZ'),
+  ('struct',
+   'C:\\Users\\gibchen\\OneDrive - '
+   'ASML\\Documents\\PCCIM\\build\\PCCIM\\localpycs\\struct.pyc',
+   'PYMODULE'),
+  ('pyimod01_archive',
+   'C:\\Users\\gibchen\\OneDrive - '
+   'ASML\\Documents\\PCCIM\\build\\PCCIM\\localpycs\\pyimod01_archive.pyc',
+   'PYMODULE'),
+  ('pyimod02_importers',
+   'C:\\Users\\gibchen\\OneDrive - '
+   'ASML\\Documents\\PCCIM\\build\\PCCIM\\localpycs\\pyimod02_importers.pyc',
+   'PYMODULE'),
+  ('pyimod03_ctypes',
+   'C:\\Users\\gibchen\\OneDrive - '
+   'ASML\\Documents\\PCCIM\\build\\PCCIM\\localpycs\\pyimod03_ctypes.pyc',
+   'PYMODULE'),
+  ('pyimod04_pywin32',
+   'C:\\Users\\gibchen\\OneDrive - '
+   'ASML\\Documents\\PCCIM\\build\\PCCIM\\localpycs\\pyimod04_pywin32.pyc',
+   'PYMODULE'),
+  ('pyiboot01_bootstrap',
+   'C:\\Program '
+   'Files\\Python312\\Lib\\site-packages\\PyInstaller\\loader\\pyiboot01_bootstrap.py',
+   'PYSOURCE'),
+  ('pyi_rth_inspect',
+   'C:\\Program '
+   'Files\\Python312\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_inspect.py',
+   'PYSOURCE'),
+  ('pyi_rth_multiprocessing',
+   'C:\\Program '
+   'Files\\Python312\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_multiprocessing.py',
+   'PYSOURCE'),
+  ('pyi_rth_cryptography_openssl',
+   'C:\\Program '
+   'Files\\Python312\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\rthooks\\pyi_rth_cryptography_openssl.py',
+   'PYSOURCE'),
+  ('pyi_rth_pkgutil',
+   'C:\\Program '
+   'Files\\Python312\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pkgutil.py',
+   'PYSOURCE'),
+  ('app',
+   'C:\\Users\\gibchen\\OneDrive - ASML\\Documents\\PCCIM\\app.py',
+   'PYSOURCE')],
+ 'python312.dll',
+ True,
+ False,
+ False,
+ [],
+ None,
+ None,
+ None)
