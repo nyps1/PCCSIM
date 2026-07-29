@@ -2,6 +2,7 @@ import os
 from pptx import Presentation
 from pptx.util import Inches
 from config import Config
+from typing import Dict, List, Any, Optional
 
 try:
     from PIL import Image
@@ -10,6 +11,16 @@ except ImportError:
 
 
 class PowerPointExporter:
+    """
+    PowerPoint 報告匯出服務 (PPT Exporter Service)
+    
+    [深度原理揭示]
+    1. Placeholder 替換機制：透過遞迴掃描投影片內的所有的 `Shape` 與 `TextFrame`，
+       尋找符合 `{{...}}` 格式的字串並進行文字置換。
+    2. 圖片縮放機制 (Aspect Ratio Scaling)：由於使用者上傳的圖片尺寸不一，
+       本類別利用 `Pillow (PIL)` 讀取圖片真實比例，並與 PowerPoint 佔位符的寬高比進行對比，
+       進而實作「等比例縮放且置中」的演算法，確保插入的圖片不會變形。
+    """
     IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"}
     PPT_EXTS = {".ppt", ".pptx"}
 
@@ -32,11 +43,11 @@ class PowerPointExporter:
         "monitoring": "Monitoring"
     }
 
-    def __init__(self, export_folder):
-        self.export_folder = export_folder
+    def __init__(self, export_folder: str) -> None:
+        self.export_folder: str = export_folder
         os.makedirs(self.export_folder, exist_ok=True)
 
-    def export(self, application, attachments):
+    def export(self, application: Any, attachments: List[Any]) -> str:
         template_path = getattr(Config, "PPT_TEMPLATE_PATH", "")
 
         if template_path and os.path.exists(template_path):
@@ -73,7 +84,7 @@ class PowerPointExporter:
     # Basic helpers
     # --------------------------------------------------
 
-    def _clean_text(self, value):
+    def _clean_text(self, value: Any) -> str:
         if value is None:
             return ""
 
@@ -86,14 +97,14 @@ class PowerPointExporter:
 
         return text
 
-    def _value(self, row, key, default=""):
+    def _value(self, row: Any, key: str, default: str = "") -> str:
         try:
             value = row[key]
             return value if value is not None else default
         except Exception:
             return default
 
-    def _get_extension(self, file_path):
+    def _get_extension(self, file_path: str) -> str:
         if not file_path or "." not in file_path:
             return ""
 
@@ -115,8 +126,8 @@ class PowerPointExporter:
             self._value(attachment, "file_path")
         )
 
-    def _group_attachments_by_section(self, attachments):
-        result = {}
+    def _group_attachments_by_section(self, attachments: List[Any]) -> Dict[str, List[Any]]:
+        result: Dict[str, List[Any]] = {}
 
         for section_key in self.SECTION_LABELS.keys():
             result[section_key] = []
@@ -135,7 +146,7 @@ class PowerPointExporter:
     # Placeholder mapping
     # --------------------------------------------------
 
-    def _build_placeholder_mapping(self, application, attachments_by_section):
+    def _build_placeholder_mapping(self, application: Any, attachments_by_section: Dict[str, List[Any]]) -> Dict[str, str]:
         problem_input_mode = self._value(application, "problem_input_mode", "manual")
 
         if problem_input_mode == "ppt":
@@ -306,7 +317,7 @@ class PowerPointExporter:
     # Replace text placeholders
     # --------------------------------------------------
 
-    def _replace_text_placeholders_in_presentation(self, prs, mapping):
+    def _replace_text_placeholders_in_presentation(self, prs: Any, mapping: Dict[str, str]) -> None:
         for slide in prs.slides:
             self._replace_text_placeholders_in_shapes(slide.shapes, mapping)
 
@@ -370,7 +381,7 @@ class PowerPointExporter:
     # Replace image placeholders
     # --------------------------------------------------
 
-    def _replace_image_placeholders(self, prs, attachments_by_section):
+    def _replace_image_placeholders(self, prs: Any, attachments_by_section: Dict[str, List[Any]]) -> None:
         max_count = getattr(Config, "MAX_IMAGE_COUNT", 10)
 
         image_placeholder_mapping = {}

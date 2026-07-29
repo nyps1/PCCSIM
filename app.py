@@ -16,6 +16,15 @@ from models.application import Application
 from models.attachment import Attachment
 from utils.file_helper import FileHelper
 
+"""
+PCCSIM 應用程式主入口 (Controller Layer)
+
+[設計模式約束]
+本模組扮演 Controller 角色，負責接收 HTTP 請求與回傳回應。
+同時展示了基礎的 **Dependency Injection (依賴注入)** 模式：
+我們在此實例化 `DatabaseManager`，並將其注入至 `PCCIMService` 中。
+這種設計降低了 Service 與具體 DB 實作之間的耦合度，便於未來測試與維護。
+"""
 
 # =========================
 # Server Config

@@ -1,18 +1,29 @@
 from datetime import datetime
+from typing import Dict, Any, List, Optional
+import sqlite3
+from database.db_manager import DatabaseManager
 
 
 class PCCIMService:
-    def __init__(self, db_manager):
-        self.db_manager = db_manager
+    """
+    PCCIM 核心商業邏輯服務 (Service Layer)
+    
+    [設計模式約束]
+    本模組實作了 Service/Repository Pattern。
+    將商業邏輯 (Business Logic) 與資料庫存取細節從 Controller (Flask Routes) 中抽離。
+    Controller 僅負責接收請求與回傳回應，所有具體實作皆由 Service 負責，達到關注點分離 (Separation of Concerns)。
+    """
+    def __init__(self, db_manager: DatabaseManager) -> None:
+        self.db_manager: DatabaseManager = db_manager
 
-    def generate_request_no(self):
+    def generate_request_no(self) -> str:
         now = datetime.now()
         return now.strftime("PCCIM-%Y%m%d-%H%M%S-%f")
 
-    def get_today(self):
+    def get_today(self) -> str:
         return datetime.now().strftime("%Y-%m-%d")
 
-    def create_application(self, application):
+    def create_application(self, application: Any) -> None:
         conn = self.db_manager.get_connection()
         cursor = conn.cursor()
 
@@ -59,7 +70,7 @@ class PCCIMService:
         conn.commit()
         conn.close()
 
-    def update_application(self, request_no, data):
+    def update_application(self, request_no: str, data: Dict[str, Any]) -> None:
         conn = self.db_manager.get_connection()
         cursor = conn.cursor()
 
@@ -135,7 +146,7 @@ class PCCIMService:
         conn.commit()
         conn.close()
 
-    def add_attachment(self, attachment):
+    def add_attachment(self, attachment: Any) -> None:
         conn = self.db_manager.get_connection()
         cursor = conn.cursor()
 
@@ -157,11 +168,11 @@ class PCCIMService:
 
     def add_edit_log(
         self,
-        request_no,
-        modifier_department,
-        modifier_author,
-        edit_summary
-    ):
+        request_no: str,
+        modifier_department: str,
+        modifier_author: str,
+        edit_summary: str
+    ) -> None:
         conn = self.db_manager.get_connection()
         cursor = conn.cursor()
 
@@ -183,7 +194,7 @@ class PCCIMService:
         conn.commit()
         conn.close()
 
-    def get_edit_logs_by_request_no(self, request_no):
+    def get_edit_logs_by_request_no(self, request_no: str) -> List[sqlite3.Row]:
         conn = self.db_manager.get_connection()
 
         rows = conn.execute("""
@@ -196,7 +207,7 @@ class PCCIMService:
         conn.close()
         return rows
 
-    def search_applications(self, filters):
+    def search_applications(self, filters: Dict[str, str]) -> List[sqlite3.Row]:
         conn = self.db_manager.get_connection()
 
         sql = """
@@ -266,7 +277,7 @@ class PCCIMService:
 
         return rows
 
-    def get_application_by_request_no(self, request_no):
+    def get_application_by_request_no(self, request_no: str) -> Optional[sqlite3.Row]:
         conn = self.db_manager.get_connection()
 
         row = conn.execute("""
@@ -278,7 +289,7 @@ class PCCIMService:
         conn.close()
         return row
 
-    def get_attachments_by_request_no(self, request_no):
+    def get_attachments_by_request_no(self, request_no: str) -> List[sqlite3.Row]:
         conn = self.db_manager.get_connection()
 
         rows = conn.execute("""
@@ -291,7 +302,7 @@ class PCCIMService:
         conn.close()
         return rows
 
-    def get_attachments_by_section(self, request_no, section_name):
+    def get_attachments_by_section(self, request_no: str, section_name: str) -> List[sqlite3.Row]:
         conn = self.db_manager.get_connection()
 
         rows = conn.execute("""
