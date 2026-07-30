@@ -78,21 +78,7 @@
                 >
             </div>
 
-            <div class="form-group" style="grid-column: 1 / -1;">
-                <label>Labels</label>
-                <div class="labels-container">
-                    <select name="labels" id="labels-select" multiple class="labels-select">
-                        {% for label in all_labels %}
-                        <option value="{{ label.id }}" {% if label.id | string in application.labels | map('string') %}selected{% endif %}>{{ label.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <div class="add-label-group">
-                        <input type="text" id="new-label-name" placeholder="New label name...">
-                        <button type="button" id="btn-add-label" class="btn btn-secondary">Add</button>
-                    </div>
-                </div>
-                <small class="section-hint">Hold Ctrl (Windows) or Cmd (Mac) to select multiple labels.</small>
-            </div>
+
 
             <div class="form-group">
                 <label>IN/DN</label>
@@ -156,6 +142,22 @@
                     value="{{ application.author or '' }}"
                     required
                 >
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Labels</label>
+                <div class="labels-container">
+                    <select name="labels" id="labels-select" multiple class="labels-select">
+                        {% for label in all_labels %}
+                        <option value="{{ label.id }}" {% if label.id | string in application.labels | map('string') %}selected{% endif %}>{{ label.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="add-label-group">
+                        <input type="text" id="new-label-name" placeholder="New label name...">
+                        <button type="button" id="btn-add-label" class="btn btn-secondary">Add</button>
+                    </div>
+                </div>
+                <small class="section-hint">Hold Ctrl (Windows) or Cmd (Mac) to select multiple labels.</small>
             </div>
         </div>
     </section>

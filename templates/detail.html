@@ -106,16 +106,7 @@
     <div class="detail-grid">
         <div><strong>Request No:</strong> {{ application.request_no }}</div>
         <div><strong>Apply Date:</strong> {{ application.apply_date }}</div>
-        <div>
-            <strong>Title:</strong> {{ application.title }}
-            {% if application.label_names %}
-                <div class="label-badges">
-                    {% for name in application.label_names.split(',') %}
-                        <span class="badge label-badge">{{ name }}</span>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        </div>
+        <div><strong>Title:</strong> {{ application.title }}</div>
         <div><strong>IN/DN:</strong> {{ application.in_dn or "" }}</div>
         <div><strong>Create Date:</strong> {{ application.create_date or "" }}</div>
         <div><strong>Close Date:</strong> {{ application.close_date or "" }}</div>
@@ -123,6 +114,16 @@
         <div><strong>Module Name:</strong> {{ application.module_name or "" }}</div>
         <div><strong>Department:</strong> {{ application.department or "" }}</div>
         <div><strong>Author:</strong> {{ application.author or "" }}</div>
+        {% if application.label_names %}
+        <div>
+            <strong>Labels:</strong>
+            <div class="label-badges" style="display: inline-block; vertical-align: middle;">
+                {% for name in application.label_names.split(',') %}
+                    <span class="badge label-badge">{{ name }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
 
     </div>
 </section>
