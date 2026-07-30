@@ -157,7 +157,6 @@
                         <button type="button" id="btn-add-label" class="btn btn-secondary">Add</button>
                     </div>
                 </div>
-                <small class="section-hint">Hold Ctrl (Windows) or Cmd (Mac) to select multiple labels.</small>
             </div>
         </div>
     </section>
@@ -419,12 +418,18 @@
             if (data.error) {
                 alert(data.error);
             } else {
-                const select = document.getElementById('labels-select');
-                const option = document.createElement('option');
-                option.value = data.id;
-                option.text = data.name;
-                option.selected = true;
-                select.add(option);
+                if (window.choicesInstances && window.choicesInstances['labels-select']) {
+                    window.choicesInstances['labels-select'].setChoices([
+                        { value: data.id.toString(), label: data.name, selected: true }
+                    ], 'value', 'label', false);
+                } else {
+                    const select = document.getElementById('labels-select');
+                    const option = document.createElement('option');
+                    option.value = data.id;
+                    option.text = data.name;
+                    option.selected = true;
+                    select.add(option);
+                }
                 input.value = '';
             }
         })

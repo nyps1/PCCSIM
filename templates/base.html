@@ -9,6 +9,8 @@
         rel="stylesheet"
         href="{{ url_for('static', filename='css/style.css') }}"
     >
+    <!-- Choices.js CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
 </head>
 <body>
 
@@ -26,5 +28,23 @@
     {% endblock %}
 </main>
 
+    <!-- Choices.js JS -->
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const labelSelects = document.querySelectorAll('.labels-select');
+            window.choicesInstances = {};
+            
+            labelSelects.forEach(function(select) {
+                const choices = new Choices(select, {
+                    removeItemButton: true,
+                    searchPlaceholderValue: 'Search labels...',
+                    shouldSort: false,
+                    placeholderValue: 'Select labels...'
+                });
+                window.choicesInstances[select.id] = choices;
+            });
+        });
+    </script>
 </body>
 </html>
