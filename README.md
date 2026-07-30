@@ -10,20 +10,33 @@
 - **資料模型 (DTO Pattern)**：利用 `Application` 與 `Attachment` 等類別（並搭配 Python Type Hints）封裝請求資料。
 - **簡報匯出**：結合 `python-pptx` 與 `Pillow` 函式庫，將表單資訊與附件圖片精確填入 PowerPoint 模板中。
 
-## 環境依賴
+## 快速開始 (Quick Start)
 
-以下為本專案所需的外部依賴套件。開發環境建議使用 Python 3.12 以上版本。
+### 1. 安裝環境依賴
 
-| Package Name | Version | Purpose |
-| :--- | :--- | :--- |
-| `Flask` | `== 3.0.3` | 提供後端 API 與網頁伺服器功能（路由、模板渲染）。 |
-| `python-pptx` | `== 0.6.23` | 讀取 PPT 模板並將系統資料匯出為 PowerPoint 簡報。 |
-| `Pillow` | `== 10.3.0` | 處理圖片縮放與裁剪，以適應 PowerPoint 佔位符大小與比例。 |
+詳細套件與精確版本請參閱 [DEPENDENCIES.md](DEPENDENCIES.md)。
 
-**安裝指令**：
 ```bash
-pip install Flask==3.0.3 python-pptx==0.6.23 Pillow==10.3.0
+pip install -r requirements.txt
 ```
+
+### 2. 啟動 Web 伺服器
+
+執行以下指令啟動 Flask 網頁伺服器：
+
+```bash
+python app.py
+```
+伺服器啟動後，請開啟瀏覽器瀏覽 `http://127.0.0.1:5005`。系統會在第一次啟動時自動建立 SQLite 資料庫（預設路徑：`pccim.db`）。
+
+### 3. 批次匯入舊有 PPT (Batch Import)
+
+若您有舊版的 PowerPoint 報告需要匯入系統建檔，請使用 `batch_import.py` 獨立腳本。該腳本會在背景掃描指定資料夾，將資料寫入資料庫，並將成功匯入的檔案自動移動至 `processed/` 子目錄中。
+
+```bash
+python batch_import.py
+```
+執行後，系統會提示您輸入要掃描的資料夾路徑。請輸入絕對路徑或相對路徑（例如：`./test_batch`）。
 
 ## PPT 模板佔位符 (Placeholder) 設定指南
 
