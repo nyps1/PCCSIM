@@ -46,6 +46,21 @@
 {% endmacro %}
 
 
+<form action="{{ url_for('import_ppt') }}" method="POST" enctype="multipart/form-data" class="card import-card" id="form-import-ppt">
+    <h2>Reverse Import from PPT</h2>
+    <p class="section-hint">
+        Upload a completed PPT template. The system will automatically extract texts and images into a new application.
+        <strong>Important:</strong> Do NOT delete the original text boxes in the template, or the system won't recognize the fields.
+    </p>
+    <div class="form-group">
+        <label for="import_ppt_file">Select Filled PPT File</label>
+        <input type="file" name="import_ppt_file" id="import_ppt_file" accept=".ppt,.pptx" required>
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary" id="btn-submit-import">Import & Create Application</button>
+    </div>
+</form>
+
 <form method="POST" enctype="multipart/form-data">
 
     <!-- Basic Information -->
@@ -66,6 +81,22 @@
             <div class="form-group">
                 <label>Title <span class="required">*</span></label>
                 <input type="text" name="title" required>
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Labels</label>
+                <div class="labels-container">
+                    <select name="labels" id="labels-select" multiple class="labels-select">
+                        {% for label in all_labels %}
+                        <option value="{{ label.id }}">{{ label.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="add-label-group">
+                        <input type="text" id="new-label-name" placeholder="New label name...">
+                        <button type="button" id="btn-add-label" class="btn btn-secondary">Add</button>
+                    </div>
+                </div>
+                <small class="section-hint">Hold Ctrl (Windows) or Cmd (Mac) to select multiple labels.</small>
             </div>
 
             <div class="form-group">
@@ -433,6 +464,39 @@
     });
 
     toggleContentInputMode();
+
+    // Handle new label creation
+    document.getElementById('btn-add-label').addEventListener('click', function() {
+        const input = document.getElementById('new-label-name');
+        const name = input.value.trim();
+        if (!name) return;
+
+        fetch('{{ url_for("create_label_api") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name: name })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+            } else {
+                const select = document.getElementById('labels-select');
+                const option = document.createElement('option');
+                option.value = data.id;
+                option.text = data.name;
+                option.selected = true;
+                select.add(option);
+                input.value = '';
+            }
+        })
+        .catch(err => {
+            console.error('Error adding label:', err);
+            alert('An error occurred while adding the label.');
+        });
+    });
 </script>
 
 {% endblock %}

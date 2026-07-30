@@ -23,6 +23,24 @@ class PCCIMService:
     def get_today(self) -> str:
         return datetime.now().strftime("%Y-%m-%d")
 
+    def create_label(self, name: str) -> Optional[sqlite3.Row]:
+        conn = self.db_manager.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("INSERT INTO labels (name) VALUES (?)", (name,))
+            conn.commit()
+            return cursor.execute("SELECT * FROM labels WHERE id = ?", (cursor.lastrowid,)).fetchone()
+        except sqlite3.IntegrityError:
+            return conn.execute("SELECT * FROM labels WHERE name = ?", (name,)).fetchone()
+        finally:
+            conn.close()
+
+    def get_all_labels(self) -> List[sqlite3.Row]:
+        conn = self.db_manager.get_connection()
+        rows = conn.execute("SELECT * FROM labels ORDER BY name").fetchall()
+        conn.close()
+        return rows
+
     def create_application(self, application: Any) -> None:
         conn = self.db_manager.get_connection()
         cursor = conn.cursor()
@@ -66,6 +84,13 @@ class PCCIMService:
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, application.to_tuple())
+
+        if getattr(application, 'labels', None):
+            for label_id in application.labels:
+                cursor.execute(
+                    "INSERT INTO application_labels (application_request_no, label_id) VALUES (?, ?)",
+                    (application.request_no, label_id)
+                )
 
         conn.commit()
         conn.close()
@@ -143,6 +168,14 @@ class PCCIMService:
             request_no
         ))
 
+        labels = data.get("labels", [])
+        cursor.execute("DELETE FROM application_labels WHERE application_request_no = ?", (request_no,))
+        for label_id in labels:
+            cursor.execute(
+                "INSERT INTO application_labels (application_request_no, label_id) VALUES (?, ?)",
+                (request_no, label_id)
+            )
+
         conn.commit()
         conn.close()
 
@@ -207,24 +240,28 @@ class PCCIMService:
         conn.close()
         return rows
 
-    def search_applications(self, filters: Dict[str, str]) -> List[sqlite3.Row]:
+    def search_applications(self, filters: Dict[str, Any]) -> List[sqlite3.Row]:
         conn = self.db_manager.get_connection()
 
         sql = """
             SELECT
-                request_no,
-                apply_date,
+                a.request_no,
+                a.apply_date,
 
-                title,
-                in_dn,
-                create_date,
-                close_date,
-                machine_or_tool,
-                module_name,
-                department,
-                author,
-                content_input_mode
-            FROM applications
+                a.title,
+                a.in_dn,
+                a.create_date,
+                a.close_date,
+                a.machine_or_tool,
+                a.module_name,
+                a.department,
+                a.author,
+                a.content_input_mode,
+                GROUP_CONCAT(l.id) as label_ids,
+                GROUP_CONCAT(l.name) as label_names
+            FROM applications a
+            LEFT JOIN application_labels al ON a.request_no = al.application_request_no
+            LEFT JOIN labels l ON al.label_id = l.id
             WHERE 1 = 1
         """
 
@@ -267,10 +304,14 @@ class PCCIMService:
             params.append(f"%{filters['author']}%")
 
         if filters.get("content_input_mode"):
-            sql += " AND content_input_mode = ?"
+            sql += " AND a.content_input_mode = ?"
             params.append(filters["content_input_mode"])
 
-        sql += " ORDER BY id DESC"
+        if filters.get("label_id"):
+            sql += " AND a.request_no IN (SELECT application_request_no FROM application_labels WHERE label_id = ?)"
+            params.append(filters["label_id"])
+
+        sql += " GROUP BY a.request_no ORDER BY a.id DESC"
 
         rows = conn.execute(sql, params).fetchall()
         conn.close()
@@ -281,9 +322,15 @@ class PCCIMService:
         conn = self.db_manager.get_connection()
 
         row = conn.execute("""
-            SELECT *
-            FROM applications
-            WHERE request_no = ?
+            SELECT 
+                a.*,
+                GROUP_CONCAT(l.id) as label_ids,
+                GROUP_CONCAT(l.name) as label_names
+            FROM applications a
+            LEFT JOIN application_labels al ON a.request_no = al.application_request_no
+            LEFT JOIN labels l ON al.label_id = l.id
+            WHERE a.request_no = ?
+            GROUP BY a.request_no
         """, (request_no,)).fetchone()
 
         conn.close()

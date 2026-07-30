@@ -103,6 +103,18 @@
                 </select>
             </div>
 
+            <div class="form-group">
+                <label>Label</label>
+                <select name="label_id">
+                    <option value="">All Labels</option>
+                    {% for label in all_labels %}
+                        <option value="{{ label.id }}" {% if filters.label_id == label.id | string %}selected{% endif %}>
+                            {{ label.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
         </div>
 
         <div class="button-area">

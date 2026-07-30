@@ -104,6 +104,23 @@ class DatabaseManager:
             )
         """)
 
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS labels (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS application_labels (
+                application_request_no TEXT NOT NULL,
+                label_id INTEGER NOT NULL,
+                PRIMARY KEY (application_request_no, label_id),
+                FOREIGN KEY (application_request_no) REFERENCES applications(request_no) ON DELETE CASCADE,
+                FOREIGN KEY (label_id) REFERENCES labels(id) ON DELETE CASCADE
+            )
+        """)
+
         conn.commit()
         conn.close()
 

@@ -85,6 +85,22 @@
                 >
             </div>
 
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Labels</label>
+                <div class="labels-container">
+                    <select name="labels" id="labels-select" multiple class="labels-select">
+                        {% for label in all_labels %}
+                        <option value="{{ label.id }}" {% if label.id | string in application.labels | map('string') %}selected{% endif %}>{{ label.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="add-label-group">
+                        <input type="text" id="new-label-name" placeholder="New label name...">
+                        <button type="button" id="btn-add-label" class="btn btn-secondary">Add</button>
+                    </div>
+                </div>
+                <small class="section-hint">Hold Ctrl (Windows) or Cmd (Mac) to select multiple labels.</small>
+            </div>
+
             <div class="form-group">
                 <label>IN/DN</label>
                 <input
@@ -422,5 +438,39 @@
     </div>
 
 </form>
+
+<script>
+    document.getElementById('btn-add-label').addEventListener('click', function() {
+        const input = document.getElementById('new-label-name');
+        const name = input.value.trim();
+        if (!name) return;
+
+        fetch('{{ url_for("create_label_api") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name: name })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+            } else {
+                const select = document.getElementById('labels-select');
+                const option = document.createElement('option');
+                option.value = data.id;
+                option.text = data.name;
+                option.selected = true;
+                select.add(option);
+                input.value = '';
+            }
+        })
+        .catch(err => {
+            console.error('Error adding label:', err);
+            alert('An error occurred while adding the label.');
+        });
+    });
+</script>
 
 {% endblock %}

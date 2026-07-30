@@ -12,6 +12,7 @@ from config import Config
 from database.db_manager import DatabaseManager
 from services.pccim_service import PCCIMService
 from services.ppt_exporter import PowerPointExporter
+from services.ppt_importer import ppt_importer
 from models.application import Application
 from models.attachment import Attachment
 from utils.file_helper import FileHelper
@@ -198,6 +199,44 @@ SECTION_LABELS = {
 def index():
     return redirect(url_for("apply"))
 
+@app.route("/import_ppt", methods=["POST"])
+def import_ppt():
+    if "import_ppt_file" not in request.files:
+        return "No file uploaded", 400
+        
+    file = request.files["import_ppt_file"]
+    if file.filename == '':
+        return "No file selected", 400
+        
+    if not FileHelper.allowed_attachment(file.filename):
+        return "Only .ppt and .pptx files are allowed", 400
+        
+    try:
+        application, attachments = ppt_importer.import_ppt(file)
+        
+        # Create application in DB
+        pccim_service.create_application(application)
+        
+        # Create attachments in DB
+        for att in attachments:
+            pccim_service.add_attachment(att)
+            
+        return redirect(url_for("detail", request_no=application.request_no))
+    except Exception as e:
+        app.logger.exception("Failed to import PPT: %s", e)
+        return f"Error importing PPT: {str(e)}", 500
+
+@app.route("/api/labels", methods=["POST"])
+def create_label_api():
+    name = request.json.get("name", "").strip()
+    if not name:
+        return jsonify({"error": "Name is required"}), 400
+    
+    label = pccim_service.create_label(name)
+    if not label:
+        return jsonify({"error": "Label already exists or could not be created"}), 400
+        
+    return jsonify({"id": label["id"], "name": label["name"]})
 
 @app.route("/apply", methods=["GET", "POST"])
 def apply():
@@ -282,6 +321,8 @@ def apply():
             implementation=request.form.get("implementation", "").strip(),
 
             monitoring=request.form.get("monitoring", "").strip(),
+            
+            labels=request.form.getlist("labels"),
         )
 
         pccim_service.create_application(application)
@@ -348,6 +389,7 @@ def apply():
         max_image_count=Config.MAX_IMAGE_COUNT,
         attachment_sections=ATTACHMENT_SECTIONS,
         section_labels=SECTION_LABELS,
+        all_labels=pccim_service.get_all_labels(),
     )
 
 
@@ -364,6 +406,7 @@ def search():
         "department": request.args.get("department", ""),
         "author": request.args.get("author", ""),
         "content_input_mode": request.args.get("content_input_mode", ""),
+        "label_id": request.args.get("label_id", ""),
     }
 
     rows = pccim_service.search_applications(filters)
@@ -372,6 +415,7 @@ def search():
         "search.html",
         rows=rows,
         filters=filters,
+        all_labels=pccim_service.get_all_labels(),
     )
 
 
@@ -497,6 +541,8 @@ def edit(request_no):
             "implementation": request.form.get("implementation", "").strip(),
 
             "monitoring": request.form.get("monitoring", "").strip(),
+            
+            "labels": request.form.getlist("labels"),
         }
 
         pccim_service.update_application(request_no, update_data)
@@ -574,6 +620,7 @@ def edit(request_no):
         attachment_sections=ATTACHMENT_SECTIONS,
         section_labels=SECTION_LABELS,
         max_image_count=Config.MAX_IMAGE_COUNT,
+        all_labels=pccim_service.get_all_labels(),
     )
 
 

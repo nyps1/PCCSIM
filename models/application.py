@@ -43,7 +43,9 @@ class Application:
 
         implementation: str,
 
-        monitoring: str
+        monitoring: str,
+
+        labels: list = None
     ) -> None:
         self.request_no = request_no
         self.apply_date = apply_date
@@ -79,6 +81,8 @@ class Application:
         self.implementation = implementation
 
         self.monitoring: str = monitoring
+        
+        self.labels = labels if labels is not None else []
 
     def to_tuple(self) -> Tuple[str, ...]:
         return (

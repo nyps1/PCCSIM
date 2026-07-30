@@ -381,3 +381,44 @@ tr:hover {
     border-radius: 8px;
     padding: 8px 12px;
 }
+
+.import-card {
+    border: 2px dashed #4a90e2;
+    background-color: #f8fbff;
+}
+
+.labels-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.labels-select {
+    height: 120px;
+}
+
+.add-label-group {
+    display: flex;
+    gap: 10px;
+}
+
+.add-label-group input {
+    flex-grow: 1;
+}
+
+.label-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.label-badge {
+    background-color: #e0ebf9;
+    color: #1f4e79;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    border: 1px solid #b8d4f0;
+}

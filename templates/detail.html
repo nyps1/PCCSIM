@@ -106,7 +106,16 @@
     <div class="detail-grid">
         <div><strong>Request No:</strong> {{ application.request_no }}</div>
         <div><strong>Apply Date:</strong> {{ application.apply_date }}</div>
-        <div><strong>Title:</strong> {{ application.title }}</div>
+        <div>
+            <strong>Title:</strong> {{ application.title }}
+            {% if application.label_names %}
+                <div class="label-badges">
+                    {% for name in application.label_names.split(',') %}
+                        <span class="badge label-badge">{{ name }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
         <div><strong>IN/DN:</strong> {{ application.in_dn or "" }}</div>
         <div><strong>Create Date:</strong> {{ application.create_date or "" }}</div>
         <div><strong>Close Date:</strong> {{ application.close_date or "" }}</div>

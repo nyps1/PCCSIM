@@ -1,17 +1,29 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables
+.env
+
+# PyInstaller / Build folders
+build/
+dist/
+*.spec
+
+# Application specific
 pccim.db
-*.db
-*.sqlite
-*.sqlite3
-
 uploads/
 exports/
 
-venv/
-.venv/
-env/
-
-.env
+# IDE / Editor
 .vscode/
+.idea/
+*.swp
+.DS_Store
