@@ -5,7 +5,7 @@ import threading
 import webbrowser
 import multiprocessing
 
-from flask import Flask, render_template, request, redirect, url_for, send_file, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, send_file, send_from_directory, jsonify
 
 from config import Config
 
@@ -31,7 +31,7 @@ PCCSIM 應用程式主入口 (Controller Layer)
 # Server Config
 # =========================
 HOST = "0.0.0.0"
-PORT = 5000
+PORT = 5005
 
 APP_NAME = "PCCSIM"
 
@@ -199,32 +199,7 @@ SECTION_LABELS = {
 def index():
     return redirect(url_for("apply"))
 
-@app.route("/import_ppt", methods=["POST"])
-def import_ppt():
-    if "import_ppt_file" not in request.files:
-        return "No file uploaded", 400
-        
-    file = request.files["import_ppt_file"]
-    if file.filename == '':
-        return "No file selected", 400
-        
-    if not FileHelper.allowed_attachment(file.filename):
-        return "Only .ppt and .pptx files are allowed", 400
-        
-    try:
-        application, attachments = ppt_importer.import_ppt(file)
-        
-        # Create application in DB
-        pccim_service.create_application(application)
-        
-        # Create attachments in DB
-        for att in attachments:
-            pccim_service.add_attachment(att)
-            
-        return redirect(url_for("detail", request_no=application.request_no))
-    except Exception as e:
-        app.logger.exception("Failed to import PPT: %s", e)
-        return f"Error importing PPT: {str(e)}", 500
+
 
 @app.route("/api/labels", methods=["POST"])
 def create_label_api():
@@ -242,46 +217,19 @@ def create_label_api():
 def apply():
     if request.method == "POST":
 
-        content_input_mode = request.form.get("content_input_mode", "manual").strip()
-
-        # Basic information required fields
-        basic_required_fields = [
-            "title",
-            "author",
+        manual_required_fields = [
+            "problem_description",
+            "action_taken",
+            "impact",
+            "container",
+            "need_help",
+            "root_cause_description",
+            "solution",
         ]
 
-        for field in basic_required_fields:
+        for field in manual_required_fields:
             if not request.form.get(field, "").strip():
                 return f"{field} is required.", 400
-
-        # Manual mode required fields
-        if content_input_mode == "manual":
-            manual_required_fields = [
-                "problem_description",
-                "action_taken",
-                "impact",
-                "container",
-                "need_help",
-                "root_cause_description",
-                "solution",
-            ]
-
-            for field in manual_required_fields:
-                if not request.form.get(field, "").strip():
-                    return f"{field} is required.", 400
-
-        # PPT upload mode required fields
-        elif content_input_mode == "ppt":
-            content_ppt_file = request.files.get("content_ppt_file")
-
-            if not content_ppt_file or not content_ppt_file.filename:
-                return "Please upload the completed PPT file.", 400
-
-            if not FileHelper.allowed_attachment(content_ppt_file.filename):
-                return "Completed PPT file type is not supported. Please upload ppt or pptx.", 400
-
-        else:
-            return "Invalid content input mode.", 400
 
         request_no = pccim_service.generate_request_no()
         apply_date = pccim_service.get_today()
@@ -299,7 +247,7 @@ def apply():
             department=request.form.get("department", "").strip(),
             author=request.form.get("author", "").strip(),
 
-            content_input_mode=content_input_mode,
+            content_input_mode="manual",
 
             problem_description=request.form.get("problem_description", "").strip(),
             problem_timeline=request.form.get("problem_timeline", "").strip(),
@@ -327,60 +275,33 @@ def apply():
 
         pccim_service.create_application(application)
 
-        # If user selected Upload Completed PPT mode
-        if content_input_mode == "ppt":
-            content_ppt_file = request.files.get("content_ppt_file")
-            content_ppt_remark = request.form.get("content_ppt_remark", "").strip()
+        for section in ATTACHMENT_SECTIONS:
+            for i in range(1, Config.MAX_IMAGE_COUNT + 1):
+                file = request.files.get(f"{section}_attachment_{i}")
+                remark = request.form.get(f"{section}_attachment_remark_{i}", "").strip()
 
-            if content_ppt_file and content_ppt_file.filename:
-                saved_filename = FileHelper.save_attachment(
-                    file=content_ppt_file,
-                    request_no=request_no,
-                    section_name="content_ppt",
-                    attachment_no=1,
-                )
+                if file and file.filename:
+                    if FileHelper.allowed_attachment(file.filename):
+                        saved_filename = FileHelper.save_attachment(
+                            file=file,
+                            request_no=request_no,
+                            section_name=section,
+                            attachment_no=i,
+                        )
 
-                attachment = Attachment(
-                    request_no=request_no,
-                    section_name="content_ppt",
-                    attachment_no=1,
-                    file_path=saved_filename,
-                    original_file_name=content_ppt_file.filename,
-                    file_type=FileHelper.get_extension(content_ppt_file.filename),
-                    remark=content_ppt_remark,
-                )
+                        attachment = Attachment(
+                            request_no=request_no,
+                            section_name=section,
+                            attachment_no=i,
+                            file_path=saved_filename,
+                            original_file_name=file.filename,
+                            file_type=FileHelper.get_extension(file.filename),
+                            remark=remark,
+                        )
 
-                pccim_service.add_attachment(attachment)
-
-        # If user selected Manual Input mode
-        if content_input_mode == "manual":
-            for section in ATTACHMENT_SECTIONS:
-                for i in range(1, Config.MAX_IMAGE_COUNT + 1):
-                    file = request.files.get(f"{section}_attachment_{i}")
-                    remark = request.form.get(f"{section}_attachment_remark_{i}", "").strip()
-
-                    if file and file.filename:
-                        if FileHelper.allowed_attachment(file.filename):
-                            saved_filename = FileHelper.save_attachment(
-                                file=file,
-                                request_no=request_no,
-                                section_name=section,
-                                attachment_no=i,
-                            )
-
-                            attachment = Attachment(
-                                request_no=request_no,
-                                section_name=section,
-                                attachment_no=i,
-                                file_path=saved_filename,
-                                original_file_name=file.filename,
-                                file_type=FileHelper.get_extension(file.filename),
-                                remark=remark,
-                            )
-
-                            pccim_service.add_attachment(attachment)
-                        else:
-                            return f"{SECTION_LABELS.get(section, section)} attachment {i} file type is not supported.", 400
+                        pccim_service.add_attachment(attachment)
+                    else:
+                        return f"{SECTION_LABELS.get(section, section)} attachment {i} file type is not supported.", 400
 
         return redirect(url_for("detail", request_no=request_no))
 
@@ -547,61 +468,35 @@ def edit(request_no):
 
         pccim_service.update_application(request_no, update_data)
 
-        if content_input_mode == "ppt":
-            content_ppt_file = request.files.get("content_ppt_file")
-            content_ppt_remark = request.form.get("content_ppt_remark", "").strip()
 
-            if content_ppt_file and content_ppt_file.filename:
-                if not FileHelper.allowed_attachment(content_ppt_file.filename):
-                    return "Completed PPT file type is not supported. Please upload ppt or pptx.", 400
 
-                saved_filename = FileHelper.save_attachment(
-                    file=content_ppt_file,
-                    request_no=request_no,
-                    section_name="content_ppt",
-                    attachment_no=1,
-                )
+        for section in ATTACHMENT_SECTIONS:
+            for i in range(1, Config.MAX_IMAGE_COUNT + 1):
+                file = request.files.get(f"{section}_attachment_{i}")
+                remark = request.form.get(f"{section}_attachment_remark_{i}", "").strip()
 
-                attachment = Attachment(
-                    request_no=request_no,
-                    section_name="content_ppt",
-                    attachment_no=1,
-                    file_path=saved_filename,
-                    original_file_name=content_ppt_file.filename,
-                    file_type=FileHelper.get_extension(content_ppt_file.filename),
-                    remark=content_ppt_remark,
-                )
+                if file and file.filename:
+                    if FileHelper.allowed_attachment(file.filename):
+                        saved_filename = FileHelper.save_attachment(
+                            file=file,
+                            request_no=request_no,
+                            section_name=section,
+                            attachment_no=i,
+                        )
 
-                pccim_service.add_attachment(attachment)
+                        attachment = Attachment(
+                            request_no=request_no,
+                            section_name=section,
+                            attachment_no=i,
+                            file_path=saved_filename,
+                            original_file_name=file.filename,
+                            file_type=FileHelper.get_extension(file.filename),
+                            remark=remark,
+                        )
 
-        if content_input_mode == "manual":
-            for section in ATTACHMENT_SECTIONS:
-                for i in range(1, Config.MAX_IMAGE_COUNT + 1):
-                    file = request.files.get(f"{section}_attachment_{i}")
-                    remark = request.form.get(f"{section}_attachment_remark_{i}", "").strip()
-
-                    if file and file.filename:
-                        if FileHelper.allowed_attachment(file.filename):
-                            saved_filename = FileHelper.save_attachment(
-                                file=file,
-                                request_no=request_no,
-                                section_name=section,
-                                attachment_no=i,
-                            )
-
-                            attachment = Attachment(
-                                request_no=request_no,
-                                section_name=section,
-                                attachment_no=i,
-                                file_path=saved_filename,
-                                original_file_name=file.filename,
-                                file_type=FileHelper.get_extension(file.filename),
-                                remark=remark,
-                            )
-
-                            pccim_service.add_attachment(attachment)
-                        else:
-                            return f"{SECTION_LABELS.get(section, section)} attachment {i} file type is not supported.", 400
+                        pccim_service.add_attachment(attachment)
+                    else:
+                        return f"{SECTION_LABELS.get(section, section)} attachment {i} file type is not supported.", 400
 
         pccim_service.add_edit_log(
             request_no=request_no,

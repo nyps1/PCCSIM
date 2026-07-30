@@ -123,37 +123,12 @@
         <div><strong>Module Name:</strong> {{ application.module_name or "" }}</div>
         <div><strong>Department:</strong> {{ application.department or "" }}</div>
         <div><strong>Author:</strong> {{ application.author or "" }}</div>
-        <div>
-            <strong>Content Input Mode:</strong>
-            {% if application.content_input_mode == "ppt" %}
-                Uploaded Completed PPT
-            {% else %}
-                Manual Input
-            {% endif %}
-        </div>
+
     </div>
 </section>
 
 
-{% if application.content_input_mode == "ppt" %}
 
-<section class="card">
-    <h2>Uploaded Completed PPT</h2>
-
-    <div class="detail-content">
-        <p>
-            The content information was provided by an uploaded completed PowerPoint file.
-        </p>
-    </div>
-
-    {{ render_attachments(
-        "content_ppt",
-        "Completed PPT",
-        attachments_by_section.get("content_ppt", [])
-    ) }}
-</section>
-
-{% else %}
 
 <section class="card">
     <h2>Problem</h2>
@@ -288,7 +263,7 @@
     ) }}
 </section>
 
-{% endif %}
+
 
 
 <section class="card">

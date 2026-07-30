@@ -6,7 +6,6 @@ from config import Config
 from models.application import Application
 from models.attachment import Attachment
 from utils.file_helper import FileHelper
-from services.pccim_service import pccim_service
 
 class PowerPointImporter:
     
@@ -74,12 +73,10 @@ class PowerPointImporter:
                         mapping[shape.name] = "monitoring"
         return mapping
         
-    def import_ppt(self, uploaded_file) -> tuple[Application, list]:
+    def import_ppt(self, uploaded_file, request_no: str, apply_date: str) -> tuple[Application, list]:
         """
         Extract text from shapes matching the mapping, and extract pictures.
         """
-        request_no = pccim_service.generate_request_no()
-        apply_date = pccim_service.get_today()
         
         file_stream = io.BytesIO(uploaded_file.read())
         prs = Presentation(file_stream)

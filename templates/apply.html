@@ -46,20 +46,7 @@
 {% endmacro %}
 
 
-<form action="{{ url_for('import_ppt') }}" method="POST" enctype="multipart/form-data" class="card import-card" id="form-import-ppt">
-    <h2>Reverse Import from PPT</h2>
-    <p class="section-hint">
-        Upload a completed PPT template. The system will automatically extract texts and images into a new application.
-        <strong>Important:</strong> Do NOT delete the original text boxes in the template, or the system won't recognize the fields.
-    </p>
-    <div class="form-group">
-        <label for="import_ppt_file">Select Filled PPT File</label>
-        <input type="file" name="import_ppt_file" id="import_ppt_file" accept=".ppt,.pptx" required>
-    </div>
-    <div class="form-group">
-        <button type="submit" class="btn btn-primary" id="btn-submit-import">Import & Create Application</button>
-    </div>
-</form>
+
 
 <form method="POST" enctype="multipart/form-data">
 
@@ -137,67 +124,7 @@
     </section>
 
 
-    <!-- Content Input Mode -->
-    <section class="card">
-        <h2>Content Input Mode</h2>
 
-        <div class="form-group">
-            <label>How would you like to provide the content? <span class="required">*</span></label>
-
-            <div class="radio-group">
-                <label>
-                    <input
-                        type="radio"
-                        name="content_input_mode"
-                        value="manual"
-                        checked
-                    >
-                    Manual Input
-                </label>
-
-                <label>
-                    <input
-                        type="radio"
-                        name="content_input_mode"
-                        value="ppt"
-                    >
-                    Upload Completed PPT
-                </label>
-            </div>
-        </div>
-    </section>
-
-
-    <!-- Completed PPT Upload Block -->
-    <div id="contentPptBlock" style="display: none;">
-        <section class="card">
-            <h2>Upload Completed PPT</h2>
-
-            <div class="content-grid single">
-                <div class="form-group">
-                    <label>Completed PPT File <span class="required">*</span></label>
-                    <input
-                        type="file"
-                        id="content_ppt_file"
-                        name="content_ppt_file"
-                        accept=".ppt,.pptx"
-                    >
-                </div>
-
-                <div class="form-group">
-                    <label>Completed PPT Remark</label>
-                    <textarea
-                        name="content_ppt_remark"
-                        placeholder="Enter remark for uploaded completed PPT"
-                    ></textarea>
-                </div>
-            </div>
-        </section>
-    </div>
-
-
-    <!-- Manual Content Block -->
-    <div id="manualContentBlock">
 
         <!-- Problem -->
         <section class="card">
@@ -387,7 +314,6 @@
             {{ attachment_block("monitoring", "Monitoring", False) }}
         </section>
 
-    </div>
 
 
     <div class="button-area">
@@ -397,73 +323,6 @@
 
 </form>
 
-
-<script>
-    function setFieldsDisabled(container, disabled) {
-        const fields = container.querySelectorAll("input, textarea, select");
-
-        fields.forEach(function (field) {
-            field.disabled = disabled;
-        });
-    }
-
-    function toggleContentInputMode() {
-        const selectedMode = document.querySelector(
-            'input[name="content_input_mode"]:checked'
-        ).value;
-
-        const manualBlock = document.getElementById("manualContentBlock");
-        const pptBlock = document.getElementById("contentPptBlock");
-        const contentPptFile = document.getElementById("content_ppt_file");
-
-        const manualRequiredFields = [
-            "problem_description",
-            "action_taken",
-            "impact",
-            "container",
-            "need_help",
-            "root_cause_description",
-            "solution"
-        ];
-
-        if (selectedMode === "manual") {
-            manualBlock.style.display = "block";
-            pptBlock.style.display = "none";
-
-            setFieldsDisabled(manualBlock, false);
-            setFieldsDisabled(pptBlock, true);
-
-            contentPptFile.required = false;
-
-            manualRequiredFields.forEach(function (fieldId) {
-                const field = document.getElementById(fieldId);
-                if (field) {
-                    field.required = true;
-                }
-            });
-        } else {
-            manualBlock.style.display = "none";
-            pptBlock.style.display = "block";
-
-            setFieldsDisabled(manualBlock, true);
-            setFieldsDisabled(pptBlock, false);
-
-            contentPptFile.required = true;
-
-            manualRequiredFields.forEach(function (fieldId) {
-                const field = document.getElementById(fieldId);
-                if (field) {
-                    field.required = false;
-                }
-            });
-        }
-    }
-
-    document.querySelectorAll('input[name="content_input_mode"]').forEach(function (radio) {
-        radio.addEventListener("change", toggleContentInputMode);
-    });
-
-    toggleContentInputMode();
 
     // Handle new label creation
     document.getElementById('btn-add-label').addEventListener('click', function() {

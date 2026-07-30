@@ -58,14 +58,7 @@
         <div class="detail-grid">
             <div><strong>Request No:</strong> {{ application.request_no }}</div>
             <div><strong>Apply Date:</strong> {{ application.apply_date }}</div>
-            <div>
-                <strong>Content Input Mode:</strong>
-                {% if application.content_input_mode == "ppt" %}
-                    Uploaded Completed PPT
-                {% else %}
-                    Manual Input
-                {% endif %}
-            </div>
+
         </div>
     </section>
 
@@ -168,40 +161,7 @@
     </section>
 
 
-    {% if application.content_input_mode == "ppt" %}
-
-    <!-- Uploaded PPT Mode -->
-    <section class="card">
-        <h2>Uploaded Completed PPT</h2>
-
-        <p class="section-hint">
-            This application was created by uploading a completed PowerPoint file.
-            You can upload a new completed PPT here. The existing uploaded PPT will be kept as history.
-        </p>
-
-        <div class="content-grid single">
-            <div class="form-group">
-                <label>Upload New Completed PPT</label>
-                <input
-                    type="file"
-                    name="content_ppt_file"
-                    accept=".ppt,.pptx"
-                >
-            </div>
-
-            <div class="form-group">
-                <label>Completed PPT Remark</label>
-                <textarea
-                    name="content_ppt_remark"
-                    placeholder="Enter remark for the new uploaded completed PPT"
-                ></textarea>
-            </div>
-        </div>
-    </section>
-
-    {% else %}
-
-    <!-- Manual Mode: Problem -->
+    <!-- Problem -->
     <section class="card">
         <h2>Problem</h2>
 
@@ -389,7 +349,7 @@
         {{ attachment_block("monitoring", "Monitoring", False) }}
     </section>
 
-    {% endif %}
+
 
 
     <!-- Edit Information -->
