@@ -48,16 +48,18 @@
     fileInput.addEventListener('change', function() {
         if (this.files && this.files.length > 0) {
             uploadText.textContent = 'Selected ' + this.files.length + ' file(s) for import';
-            uploadText.style.color = 'var(--primary-color)';
+            uploadText.style.color = '#e74c3c';
             uploadText.style.fontWeight = 'bold';
-            dropzone.style.borderColor = 'var(--primary-color)';
-            dropzone.style.backgroundColor = 'rgba(0, 123, 255, 0.05)';
+            dropzone.style.borderColor = '#e74c3c';
+            dropzone.style.backgroundColor = 'rgba(231, 76, 60, 0.05)';
+            dropzone.style.borderStyle = 'solid';
         } else {
             uploadText.textContent = 'Click to select multiple files or drag and drop';
             uploadText.style.color = '#555';
             uploadText.style.fontWeight = 'normal';
             dropzone.style.borderColor = '#ccc';
             dropzone.style.backgroundColor = 'transparent';
+            dropzone.style.borderStyle = 'dashed';
         }
     });
 </script>

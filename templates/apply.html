@@ -478,6 +478,7 @@
                         uploadText.style.fontWeight = 'normal';
                         dropzone.style.borderColor = '';
                         dropzone.style.backgroundColor = '';
+                        dropzone.style.borderStyle = '';
                     }
                 }, 0);
             });
@@ -494,16 +495,18 @@
             pptFileInput.addEventListener('change', function() {
                 if (this.files && this.files.length > 0) {
                     uploadText.textContent = 'Selected File: ' + this.files[0].name;
-                    uploadText.style.color = 'var(--primary-color)'; // Use theme color
+                    uploadText.style.color = '#e74c3c'; // Red text
                     uploadText.style.fontWeight = 'bold';
-                    dropzone.style.borderColor = 'var(--primary-color)';
-                    dropzone.style.backgroundColor = 'rgba(0, 123, 255, 0.05)';
+                    dropzone.style.borderColor = '#e74c3c'; // Red border
+                    dropzone.style.backgroundColor = 'rgba(231, 76, 60, 0.05)'; // Light red background
+                    dropzone.style.borderStyle = 'solid'; // Solid border
                 } else {
                     uploadText.textContent = defaultText;
                     uploadText.style.color = '';
                     uploadText.style.fontWeight = 'normal';
                     dropzone.style.borderColor = '';
                     dropzone.style.backgroundColor = '';
+                    dropzone.style.borderStyle = '';
                 }
             });
         }
