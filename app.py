@@ -14,6 +14,7 @@ from flask import (
     send_file,
     send_from_directory,
     jsonify,
+    flash,
 )
 
 from config import Config
@@ -87,6 +88,7 @@ else:
 # =========================
 app = Flask(__name__)
 app.config.from_object(Config)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "fallback_secret_key_for_flash")
 
 Config.init_folders()
 
@@ -243,6 +245,51 @@ def build_attachments_by_section(attachments):
 @app.route("/")
 def index():
     return redirect(url_for("apply"))
+
+@app.route("/batch_import_page", methods=["GET", "POST"])
+def batch_import_page():
+    if request.method == "POST":
+        files = request.files.getlist("batch_ppt_files")
+        if not files or all(f.filename == '' for f in files):
+            flash("No files selected.", "error")
+            return redirect(request.url)
+            
+        success_count = 0
+        error_count = 0
+        
+        for file in files:
+            if file and FileHelper.allowed_attachment(file.filename):
+                try:
+                    request_no = pccim_service.generate_request_no()
+                    apply_date = pccim_service.get_today()
+                    
+                    application, attachments = ppt_importer.import_ppt(file, request_no, apply_date)
+                    
+                    # Ensure content_input_mode is ppt since it was parsed from PPT
+                    application["content_input_mode"] = "ppt"
+                    
+                    # Create application in DB
+                    pccim_service.create_application(application)
+                    
+                    # Create attachments in DB
+                    for att in attachments:
+                        pccim_service.add_attachment(att)
+                        
+                    success_count += 1
+                except Exception as e:
+                    app.logger.exception("Failed to import PPT %s: %s", file.filename, e)
+                    error_count += 1
+            else:
+                error_count += 1 # Unallowed extension
+                
+        if error_count > 0:
+            flash(f"Batch import completed: {success_count} succeeded, {error_count} failed.", "error")
+        else:
+            flash(f"Batch import completed successfully: {success_count} file(s) imported.", "success")
+            
+        return redirect(url_for("batch_import_page"))
+        
+    return render_template("batch_upload.html")
 
 
 @app.route("/api/labels", methods=["POST"])
