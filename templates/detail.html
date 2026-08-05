@@ -23,13 +23,12 @@
                     or filename.endswith('.gif')
                     or filename.endswith('.bmp')
                     or filename.endswith('.webp') %}
-
-                     }}"
+                    <img src="{{ url_for('uploaded_file', filename=attachment.file_path) }}"
                         alt="{{ section_title }} Attachment {{ attachment.attachment_no }}"
                     >
 
                     <div class="attachment-actions">
-                         }}"
+                        <a href="{{ url_for('download_attachment', filename=attachment.file_path) }}"
                             class="link-btn"
                         >
                             Download Image
@@ -50,7 +49,7 @@
                                 {{ attachment.original_file_name or attachment.file_path }}
                             </p>
 
-                             }}"
+                            <a href="{{ url_for('download_attachment', filename=attachment.file_path) }}"
                                 class="link-btn"
                             >
                                 Download PowerPoint
@@ -62,7 +61,7 @@
 
                     <p>Preview is not supported for this attachment.</p>
 
-                     }}"
+                    <a href="{{ url_for('download_attachment', filename=attachment.file_path) }}"
                         class="link-btn"
                     >
                         Download Attachment
