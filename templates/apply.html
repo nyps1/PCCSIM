@@ -465,7 +465,38 @@
 
         if (applyForm) {
             applyForm.addEventListener('reset', function() {
-                setTimeout(toggleDetailInputMode, 0);
+                setTimeout(function() {
+                    toggleDetailInputMode();
+                    
+                    // Reset upload text when form resets
+                    const pptFileInput = document.getElementById('ppt_file');
+                    const uploadText = document.querySelector('.upload-dropzone .upload-text');
+                    if (pptFileInput && uploadText) {
+                        uploadText.textContent = 'Click to upload or drag and drop';
+                        uploadText.style.color = '';
+                        uploadText.style.fontWeight = 'normal';
+                    }
+                }, 0);
+            });
+        }
+
+        // Add file selection feedback for PPT Upload
+        const pptFileInput = document.getElementById('ppt_file');
+        const uploadText = document.querySelector('.upload-dropzone .upload-text');
+
+        if (pptFileInput && uploadText) {
+            const defaultText = uploadText.textContent;
+            
+            pptFileInput.addEventListener('change', function() {
+                if (this.files && this.files.length > 0) {
+                    uploadText.textContent = 'Selected File: ' + this.files[0].name;
+                    uploadText.style.color = 'var(--primary-color)'; // Use theme color
+                    uploadText.style.fontWeight = 'bold';
+                } else {
+                    uploadText.textContent = defaultText;
+                    uploadText.style.color = '';
+                    uploadText.style.fontWeight = 'normal';
+                }
             });
         }
     });
