@@ -46,9 +46,7 @@
 {% endmacro %}
 
 
-
-
-<form method="POST" enctype="multipart/form-data">
+<form method="POST" enctype="multipart/form-data" id="apply-form">
 
     <!-- Basic Information -->
     <section class="card">
@@ -69,8 +67,6 @@
                 <label>Title <span class="required">*</span></label>
                 <input type="text" name="title" required>
             </div>
-
-
 
             <div class="form-group">
                 <label>IN/DN</label>
@@ -109,15 +105,27 @@
 
             <div class="form-group" style="grid-column: 1 / -1;">
                 <label>Labels</label>
+
                 <div class="labels-container">
                     <select name="labels" id="labels-select" multiple class="labels-select">
                         {% for label in all_labels %}
                         <option value="{{ label.id }}">{{ label.name }}</option>
                         {% endfor %}
                     </select>
+
                     <div class="add-label-group">
-                        <input type="text" id="new-label-name" placeholder="New label name...">
-                        <button type="button" id="btn-add-label" class="btn btn-secondary">Add</button>
+                        <input
+                            type="text"
+                            id="new-label-name"
+                            placeholder="New label name..."
+                        >
+                        <button
+                            type="button"
+                            id="btn-add-label"
+                            class="btn btn-secondary"
+                        >
+                            Add
+                        </button>
                     </div>
                 </div>
             </div>
@@ -125,7 +133,62 @@
     </section>
 
 
+    <!-- Detail Input Method -->
+    <section class="card">
+        <h2>Detail Input Method</h2>
 
+        <!-- 卡片切換鈕（無 Emoji 版本） -->
+        <div class="radio-toggle-group">
+            <label class="toggle-item">
+                <input type="radio" name="detail_input_mode" value="manual" checked>
+                <div class="toggle-content">
+                    <div class="text-group">
+                        <span class="title">Manually</span>
+                    </div>
+                </div>
+            </label>
+
+            <label class="toggle-item">
+                <input type="radio" name="detail_input_mode" value="ppt">
+                <div class="toggle-content">
+                    <div class="text-group">
+                        <span class="title">PPT Upload</span>
+                    </div>
+                </div>
+            </label>
+        </div>
+
+        <p class="section-hint">
+            Choose Manually to fill in Problem, Action Taken, Impact, Containment,
+            Root Cause, Solution, Implementation and Monitoring by yourself.
+            Choose PPT Upload to import these detail sections from a PPT/PPTX file.
+        </p>
+    </section>
+
+    <!-- PPT Upload Section -->
+    <section id="ppt-upload-section" class="card" style="display: none;">
+        <h2>PPT Upload</h2>
+        
+        <p class="section-hint">
+            Upload a PCCSIM PPT or PPTX file. Basic Information above will still be
+            submitted from this form. The system should parse the detail content
+            from the uploaded PPT.
+        </p>
+
+        <!-- 拖曳上傳區域（無 Emoji 版本） -->
+        <div class="upload-dropzone">
+            <input type="file" id="ppt_file" name="ppt_file" accept=".ppt,.pptx" required>
+            <div class="dropzone-content">
+                <p class="upload-text">Click to upload or drag and drop</p>
+                <p class="upload-types">PPT or PPTX up to 10MB</p>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- Manual Detail Section: Problem to Monitoring -->
+    <div id="manual-detail-section">
 
         <!-- Problem -->
         <section class="card">
@@ -315,55 +378,158 @@
             {{ attachment_block("monitoring", "Monitoring", False) }}
         </section>
 
+    </div>
 
 
     <div class="button-area">
         <button type="reset" class="btn secondary">Clear</button>
-        <button type="submit" class="btn primary">Submit Application</button>
+        <button type="submit" class="btn primary" id="submit-button">
+            Submit Application
+        </button>
     </div>
 
 </form>
 
 
 <script>
-    // Handle new label creation
-    document.getElementById('btn-add-label').addEventListener('click', function() {
-        const input = document.getElementById('new-label-name');
-        const name = input.value.trim();
-        if (!name) return;
+    function setSectionInputsDisabled(section, disabled) {
+        if (!section) {
+            return;
+        }
 
-        fetch('{{ url_for("create_label_api") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ name: name })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                alert(data.error);
-            } else {
-                if (window.choicesInstances && window.choicesInstances['labels-select']) {
-                    window.choicesInstances['labels-select'].setChoices([
-                        { value: data.id.toString(), label: data.name, selected: true }
-                    ], 'value', 'label', false);
-                } else {
-                    const select = document.getElementById('labels-select');
-                    const option = document.createElement('option');
-                    option.value = data.id;
-                    option.text = data.name;
-                    option.selected = true;
-                    select.add(option);
-                }
-                input.value = '';
+        const inputs = section.querySelectorAll('input, textarea, select, button');
+
+        inputs.forEach(function(input) {
+            if (input.type === 'submit' || input.type === 'reset') {
+                return;
             }
-        })
-        .catch(err => {
-            console.error('Error adding label:', err);
-            alert('An error occurred while adding the label.');
+
+            input.disabled = disabled;
         });
+    }
+
+    function toggleDetailInputMode() {
+        const selectedModeInput = document.querySelector(
+            'input[name="detail_input_mode"]:checked'
+        );
+
+        if (!selectedModeInput) {
+            return;
+        }
+
+        const selectedMode = selectedModeInput.value;
+        const manualDetailSection = document.getElementById('manual-detail-section');
+        const pptUploadSection = document.getElementById('ppt-upload-section');
+        const pptFileInput = document.getElementById('ppt_file');
+        const submitButton = document.getElementById('submit-button');
+
+        if (selectedMode === 'manual') {
+            manualDetailSection.style.display = '';
+            pptUploadSection.style.display = 'none';
+
+            setSectionInputsDisabled(manualDetailSection, false);
+            setSectionInputsDisabled(pptUploadSection, true);
+
+            if (pptFileInput) {
+                pptFileInput.required = false;
+            }
+
+            if (submitButton) {
+                submitButton.textContent = 'Submit Application';
+            }
+        } else {
+            manualDetailSection.style.display = 'none';
+            pptUploadSection.style.display = '';
+
+            setSectionInputsDisabled(manualDetailSection, true);
+            setSectionInputsDisabled(pptUploadSection, false);
+
+            if (pptFileInput) {
+                pptFileInput.required = true;
+            }
+
+            if (submitButton) {
+                submitButton.textContent = 'Upload PPT and Submit';
+            }
+        }
+    }
+
+    document.querySelectorAll('input[name="detail_input_mode"]').forEach(function(radio) {
+        radio.addEventListener('change', toggleDetailInputMode);
     });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleDetailInputMode();
+
+        const applyForm = document.getElementById('apply-form');
+
+        if (applyForm) {
+            applyForm.addEventListener('reset', function() {
+                setTimeout(toggleDetailInputMode, 0);
+            });
+        }
+    });
+</script>
+
+
+<script>
+    // Handle new label creation
+    const addLabelButton = document.getElementById('btn-add-label');
+
+    if (addLabelButton) {
+        addLabelButton.addEventListener('click', function() {
+            const input = document.getElementById('new-label-name');
+            const name = input.value.trim();
+
+            if (!name) {
+                return;
+            }
+
+            fetch('{{ url_for("create_label_api") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: name
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    if (
+                        window.choicesInstances &&
+                        window.choicesInstances['labels-select']
+                    ) {
+                        window.choicesInstances['labels-select'].setChoices([
+                            {
+                                value: data.id.toString(),
+                                label: data.name,
+                                selected: true
+                            }
+                        ], 'value', 'label', false);
+                    } else {
+                        const select = document.getElementById('labels-select');
+                        const option = document.createElement('option');
+
+                        option.value = data.id;
+                        option.text = data.name;
+                        option.selected = true;
+
+                        select.add(option);
+                    }
+
+                    input.value = '';
+                }
+            })
+            .catch(err => {
+                console.error('Error adding label:', err);
+                alert('An error occurred while adding the label.');
+            });
+        });
+    }
 </script>
 
 {% endblock %}

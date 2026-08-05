@@ -2,7 +2,7 @@
 
 {% block content %}
 
-{% macro render_attachments(section_key, section_title, section_attachments) %}
+{% macro render_attachments(section_title, section_attachments) %}
 <details class="attachment-collapse">
     <summary>
         <span>{{ section_title }} Attachments</span>
@@ -24,12 +24,12 @@
                     or filename.endswith('.bmp')
                     or filename.endswith('.webp') %}
 
-                    <img src="{{ url_for('uploaded_file', filename=attachment.file_path) }}"
-                        alt="{{ section_title }} 附件 {{ attachment.attachment_no }}"
+                     }}"
+                        alt="{{ section_title }} Attachment {{ attachment.attachment_no }}"
                     >
 
                     <div class="attachment-actions">
-                        <a href="{{ url_for('download_attachment', filename=attachment.file_path) }}"
+                         }}"
                             class="link-btn"
                         >
                             Download Image
@@ -42,13 +42,15 @@
                         <div class="ppt-icon">PPT</div>
 
                         <div class="ppt-info">
-                            <p><strong>PowerPoint Attachment</strong></p>
+                            <p>
+                                <strong>PowerPoint Attachment</strong>
+                            </p>
 
                             <p>
                                 {{ attachment.original_file_name or attachment.file_path }}
                             </p>
 
-                           <a href="{{ attachment.original_file_name or attachment.file_path }}"
+                             }}"
                                 class="link-btn"
                             >
                                 Download PowerPoint
@@ -60,9 +62,9 @@
 
                     <p>Preview is not supported for this attachment.</p>
 
-                    <a href="{{ url_for('download_attachment', filename=attachment.file_path) }}"
-                            class="link-btn"
-                        >
+                     }}"
+                        class="link-btn"
+                    >
                         Download Attachment
                     </a>
 
@@ -82,21 +84,25 @@
 {% endmacro %}
 
 
+<!-- Application Detail / Basic Information -->
 <section class="card">
     <div class="title-row">
         <h2>Application Detail</h2>
 
         <div class="table-action-buttons">
-             <a href="{{ url_for('edit', request_no=application.request_no) }}"
+            <a 
+                href="{{ url_for('edit', request_no=application.request_no) }}"
                 class="btn primary"
             >
                 Edit
             </a>
 
             {% if application.content_input_mode != "ppt" %}
-             <a href="{{ url_for('export_ppt', request_no=application.request_no) }}"
+            <!-- 修正：對齊相同的路由邏輯，將 Export 按鈕的語法同步導正 -->
+            <a 
+                href="{{ url_for('export_ppt', request_no=application.request_no) }}"
                 class="btn primary"
-             >
+            >
                 Export PowerPoint
             </a>
             {% endif %}
@@ -104,33 +110,101 @@
     </div>
 
     <div class="detail-grid">
-        <div><strong>Request No:</strong> {{ application.request_no }}</div>
-        <div><strong>Apply Date:</strong> {{ application.apply_date }}</div>
-        <div><strong>Title:</strong> {{ application.title }}</div>
-        <div><strong>IN/DN:</strong> {{ application.in_dn or "" }}</div>
-        <div><strong>Create Date:</strong> {{ application.create_date or "" }}</div>
-        <div><strong>Close Date:</strong> {{ application.close_date or "" }}</div>
-        <div><strong>Machine/Tool:</strong> {{ application.machine_or_tool or "" }}</div>
-        <div><strong>Module Name:</strong> {{ application.module_name or "" }}</div>
-        <div><strong>Department:</strong> {{ application.department or "" }}</div>
-        <div><strong>Author:</strong> {{ application.author or "" }}</div>
+        <div>
+            <strong>Request No:</strong>
+            {{ application.request_no }}
+        </div>
+
+        <div>
+            <strong>Apply Date:</strong>
+            {{ application.apply_date }}
+        </div>
+
+        <div>
+            <strong>Title:</strong>
+            {{ application.title }}
+        </div>
+
+        <div>
+            <strong>IN/DN:</strong>
+            {{ application.in_dn or "" }}
+        </div>
+
+        <div>
+            <strong>Create Date:</strong>
+            {{ application.create_date or "" }}
+        </div>
+
+        <div>
+            <strong>Close Date:</strong>
+            {{ application.close_date or "" }}
+        </div>
+
+        <div>
+            <strong>Machine/Tool:</strong>
+            {{ application.machine_or_tool or "" }}
+        </div>
+
+        <div>
+            <strong>Module Name:</strong>
+            {{ application.module_name or "" }}
+        </div>
+
+        <div>
+            <strong>Department:</strong>
+            {{ application.department or "" }}
+        </div>
+
+        <div>
+            <strong>Author:</strong>
+            {{ application.author or "" }}
+        </div>
+
+        <div>
+            <strong>Content Input Mode:</strong>
+            {{ application.content_input_mode or "" }}
+        </div>
+
         {% if application.label_names %}
         <div>
             <strong>Labels:</strong>
-            <div class="label-badges" style="display: inline-block; vertical-align: middle;">
+
+            <div
+                class="label-badges"
+                style="display: inline-block; vertical-align: middle;"
+            >
                 {% for name in application.label_names.split(',') %}
                     <span class="badge label-badge">{{ name }}</span>
                 {% endfor %}
             </div>
         </div>
         {% endif %}
-
     </div>
 </section>
 
 
+{% if application.content_input_mode == "ppt" %}
 
+<!-- PPT Upload Mode -->
+<section class="card">
+    <h2>PPT Upload</h2>
 
+    <div class="detail-content">
+        <p>
+            This application was created with PPT Upload mode.
+            The detail content is stored in the uploaded PowerPoint file.
+        </p>
+    </div>
+
+    {{ render_attachments(
+        "Completed PPT",
+        attachments_by_section.get("content_ppt", [])
+    ) }}
+</section>
+
+{% else %}
+
+<!-- Manual Mode: Problem to Monitoring -->
 <section class="card">
     <h2>Problem</h2>
 
@@ -143,7 +217,6 @@
     </div>
 
     {{ render_attachments(
-        "problem",
         "Problem",
         attachments_by_section.get("problem", [])
     ) }}
@@ -158,7 +231,6 @@
     </div>
 
     {{ render_attachments(
-        "action_taken",
         "Action Taken",
         attachments_by_section.get("action_taken", [])
     ) }}
@@ -182,7 +254,6 @@
     </div>
 
     {{ render_attachments(
-        "container",
         "Containment",
         attachments_by_section.get("container", [])
     ) }}
@@ -213,7 +284,6 @@
     </div>
 
     {{ render_attachments(
-        "root_cause",
         "Root Cause",
         attachments_by_section.get("root_cause", [])
     ) }}
@@ -228,7 +298,6 @@
     </div>
 
     {{ render_attachments(
-        "solution",
         "Solution",
         attachments_by_section.get("solution", [])
     ) }}
@@ -243,7 +312,6 @@
     </div>
 
     {{ render_attachments(
-        "implementation",
         "Implementation",
         attachments_by_section.get("implementation", [])
     ) }}
@@ -258,15 +326,15 @@
     </div>
 
     {{ render_attachments(
-        "monitoring",
         "Monitoring",
         attachments_by_section.get("monitoring", [])
     ) }}
 </section>
 
+{% endif %}
 
 
-
+<!-- Edit History -->
 <section class="card">
     <h2>Edit History</h2>
 

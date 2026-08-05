@@ -5,7 +5,16 @@ import threading
 import webbrowser
 import multiprocessing
 
-from flask import Flask, render_template, request, redirect, url_for, send_file, send_from_directory, jsonify
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    send_file,
+    send_from_directory,
+    jsonify,
+)
 
 from config import Config
 
@@ -22,8 +31,8 @@ PCCSIM 應用程式主入口 (Controller Layer)
 
 [設計模式約束]
 本模組扮演 Controller 角色，負責接收 HTTP 請求與回傳回應。
-同時展示了基礎的 **Dependency Injection (依賴注入)** 模式：
-我們在此實例化 `DatabaseManager`，並將其注入至 `PCCIMService` 中。
+同時展示了基礎的 Dependency Injection (依賴注入) 模式：
+我們在此實例化 DatabaseManager，並將其注入至 PCCIMService 中。
 這種設計降低了 Service 與具體 DB 實作之間的耦合度，便於未來測試與維護。
 """
 
@@ -193,6 +202,42 @@ SECTION_LABELS = {
 
 
 # =========================
+# Helper Functions
+# =========================
+def normalize_extension(filename):
+    """
+    Normalize file extension to lowercase without dot.
+    Example:
+        test.pptx -> pptx
+        test.PPT -> ppt
+    """
+    ext = FileHelper.get_extension(filename)
+    return ext.lower().lstrip(".")
+
+
+def is_ppt_file(filename):
+    ext = normalize_extension(filename)
+    return ext in ["ppt", "pptx"]
+
+
+def build_attachments_by_section(attachments):
+    attachments_by_section = {}
+
+    for section in SECTION_LABELS.keys():
+        attachments_by_section[section] = []
+
+    for attachment in attachments:
+        section_name = attachment["section_name"]
+
+        if section_name not in attachments_by_section:
+            attachments_by_section[section_name] = []
+
+        attachments_by_section[section_name].append(attachment)
+
+    return attachments_by_section
+
+
+# =========================
 # Routes
 # =========================
 @app.route("/")
@@ -200,108 +245,231 @@ def index():
     return redirect(url_for("apply"))
 
 
-
 @app.route("/api/labels", methods=["POST"])
 def create_label_api():
     name = request.json.get("name", "").strip()
+
     if not name:
         return jsonify({"error": "Name is required"}), 400
-    
+
     label = pccim_service.create_label(name)
+
     if not label:
         return jsonify({"error": "Label already exists or could not be created"}), 400
-        
-    return jsonify({"id": label["id"], "name": label["name"]})
+
+    return jsonify(
+        {
+            "id": label["id"],
+            "name": label["name"],
+        }
+    )
+
 
 @app.route("/apply", methods=["GET", "POST"])
 def apply():
     if request.method == "POST":
+        detail_input_mode = request.form.get("detail_input_mode", "manual").strip()
 
-        manual_required_fields = [
-            "problem_description",
-            "action_taken",
-            "impact",
-            "container",
-            "need_help",
-            "root_cause_description",
-            "solution",
+        if detail_input_mode not in ["manual", "ppt"]:
+            return "Invalid detail input mode.", 400
+
+        # =========================
+        # Basic Information Validation
+        # Basic Information 永遠都要填
+        # =========================
+        basic_required_fields = [
+            "title",
+            "author",
         ]
 
-        for field in manual_required_fields:
+        for field in basic_required_fields:
             if not request.form.get(field, "").strip():
                 return f"{field} is required.", 400
+
+        # =========================
+        # Manual Mode Validation
+        # 只有 manual 模式才檢查 Problem 到 Solution
+        # =========================
+        if detail_input_mode == "manual":
+            manual_required_fields = [
+                "problem_description",
+                "action_taken",
+                "impact",
+                "container",
+                "need_help",
+                "root_cause_description",
+                "solution",
+            ]
+
+            for field in manual_required_fields:
+                if not request.form.get(field, "").strip():
+                    return f"{field} is required.", 400
+
+        # =========================
+        # PPT Upload Mode Validation
+        # 只有 ppt 模式才檢查 ppt_file
+        # =========================
+        if detail_input_mode == "ppt":
+            ppt_file = request.files.get("ppt_file")
+
+            if not ppt_file or not ppt_file.filename:
+                return "PPT file is required.", 400
+
+            if not is_ppt_file(ppt_file.filename):
+                return "Only .ppt and .pptx files are allowed for PPT Upload mode.", 400
+
+            if not FileHelper.allowed_attachment(ppt_file.filename):
+                return "PPT file type is not supported.", 400
 
         request_no = pccim_service.generate_request_no()
         apply_date = pccim_service.get_today()
 
-        application = Application(
-            request_no=request_no,
-            apply_date=apply_date,
+        # =========================
+        # Build Application
+        # Basic Information 永遠從表單取得
+        # Detail content 依照 detail_input_mode 決定
+        # =========================
+        if detail_input_mode == "manual":
+            application = Application(
+                request_no=request_no,
+                apply_date=apply_date,
 
-            title=request.form.get("title", "").strip(),
-            in_dn=request.form.get("in_dn", "").strip(),
-            create_date=request.form.get("create_date", "").strip(),
-            close_date=request.form.get("close_date", "").strip(),
-            machine_or_tool=request.form.get("machine_or_tool", "").strip(),
-            module_name=request.form.get("module_name", "").strip(),
-            department=request.form.get("department", "").strip(),
-            author=request.form.get("author", "").strip(),
+                title=request.form.get("title", "").strip(),
+                in_dn=request.form.get("in_dn", "").strip(),
+                create_date=request.form.get("create_date", "").strip(),
+                close_date=request.form.get("close_date", "").strip(),
+                machine_or_tool=request.form.get("machine_or_tool", "").strip(),
+                module_name=request.form.get("module_name", "").strip(),
+                department=request.form.get("department", "").strip(),
+                author=request.form.get("author", "").strip(),
 
-            content_input_mode="manual",
+                content_input_mode="manual",
 
-            problem_description=request.form.get("problem_description", "").strip(),
-            problem_timeline=request.form.get("problem_timeline", "").strip(),
+                problem_description=request.form.get("problem_description", "").strip(),
+                problem_timeline=request.form.get("problem_timeline", "").strip(),
 
-            action_taken=request.form.get("action_taken", "").strip(),
+                action_taken=request.form.get("action_taken", "").strip(),
 
-            impact=request.form.get("impact", "").strip(),
+                impact=request.form.get("impact", "").strip(),
 
-            container=request.form.get("container", "").strip(),
+                container=request.form.get("container", "").strip(),
 
-            need_help=request.form.get("need_help", "").strip(),
+                need_help=request.form.get("need_help", "").strip(),
 
-            root_cause_description=request.form.get("root_cause_description", "").strip(),
-            root_cause_possible_cause=request.form.get("root_cause_possible_cause", "").strip(),
-            root_cause_troubleshooting_timeline=request.form.get("root_cause_troubleshooting_timeline", "").strip(),
+                root_cause_description=request.form.get("root_cause_description", "").strip(),
+                root_cause_possible_cause=request.form.get("root_cause_possible_cause", "").strip(),
+                root_cause_troubleshooting_timeline=request.form.get("root_cause_troubleshooting_timeline", "").strip(),
 
-            solution=request.form.get("solution", "").strip(),
+                solution=request.form.get("solution", "").strip(),
 
-            implementation=request.form.get("implementation", "").strip(),
+                implementation=request.form.get("implementation", "").strip(),
 
-            monitoring=request.form.get("monitoring", "").strip(),
-            
-            labels=request.form.getlist("labels"),
-        )
+                monitoring=request.form.get("monitoring", "").strip(),
+
+                labels=request.form.getlist("labels"),
+            )
+
+        else:
+            application = Application(
+                request_no=request_no,
+                apply_date=apply_date,
+
+                title=request.form.get("title", "").strip(),
+                in_dn=request.form.get("in_dn", "").strip(),
+                create_date=request.form.get("create_date", "").strip(),
+                close_date=request.form.get("close_date", "").strip(),
+                machine_or_tool=request.form.get("machine_or_tool", "").strip(),
+                module_name=request.form.get("module_name", "").strip(),
+                department=request.form.get("department", "").strip(),
+                author=request.form.get("author", "").strip(),
+
+                content_input_mode="ppt",
+
+                problem_description="",
+                problem_timeline="",
+
+                action_taken="",
+
+                impact="",
+
+                container="",
+
+                need_help="",
+
+                root_cause_description="",
+                root_cause_possible_cause="",
+                root_cause_troubleshooting_timeline="",
+
+                solution="",
+
+                implementation="",
+
+                monitoring="",
+
+                labels=request.form.getlist("labels"),
+            )
 
         pccim_service.create_application(application)
 
-        for section in ATTACHMENT_SECTIONS:
-            for i in range(1, Config.MAX_IMAGE_COUNT + 1):
-                file = request.files.get(f"{section}_attachment_{i}")
-                remark = request.form.get(f"{section}_attachment_remark_{i}", "").strip()
+        # =========================
+        # Save Attachments
+        # =========================
+        if detail_input_mode == "manual":
+            for section in ATTACHMENT_SECTIONS:
+                for i in range(1, Config.MAX_IMAGE_COUNT + 1):
+                    file = request.files.get(f"{section}_attachment_{i}")
+                    remark = request.form.get(
+                        f"{section}_attachment_remark_{i}",
+                        "",
+                    ).strip()
 
-                if file and file.filename:
-                    if FileHelper.allowed_attachment(file.filename):
-                        saved_filename = FileHelper.save_attachment(
-                            file=file,
-                            request_no=request_no,
-                            section_name=section,
-                            attachment_no=i,
-                        )
+                    if file and file.filename:
+                        if FileHelper.allowed_attachment(file.filename):
+                            saved_filename = FileHelper.save_attachment(
+                                file=file,
+                                request_no=request_no,
+                                section_name=section,
+                                attachment_no=i,
+                            )
 
-                        attachment = Attachment(
-                            request_no=request_no,
-                            section_name=section,
-                            attachment_no=i,
-                            file_path=saved_filename,
-                            original_file_name=file.filename,
-                            file_type=FileHelper.get_extension(file.filename),
-                            remark=remark,
-                        )
+                            attachment = Attachment(
+                                request_no=request_no,
+                                section_name=section,
+                                attachment_no=i,
+                                file_path=saved_filename,
+                                original_file_name=file.filename,
+                                file_type=FileHelper.get_extension(file.filename),
+                                remark=remark,
+                            )
 
-                        pccim_service.add_attachment(attachment)
-                    else:
-                        return f"{SECTION_LABELS.get(section, section)} attachment {i} file type is not supported.", 400
+                            pccim_service.add_attachment(attachment)
+                        else:
+                            return (
+                                f"{SECTION_LABELS.get(section, section)} "
+                                f"attachment {i} file type is not supported."
+                            ), 400
+
+        else:
+            ppt_file = request.files.get("ppt_file")
+
+            saved_filename = FileHelper.save_attachment(
+                file=ppt_file,
+                request_no=request_no,
+                section_name="content_ppt",
+                attachment_no=1,
+            )
+
+            attachment = Attachment(
+                request_no=request_no,
+                section_name="content_ppt",
+                attachment_no=1,
+                file_path=saved_filename,
+                original_file_name=ppt_file.filename,
+                file_type=FileHelper.get_extension(ppt_file.filename),
+                remark="Uploaded content PPT",
+            )
+
+            pccim_service.add_attachment(attachment)
 
         return redirect(url_for("detail", request_no=request_no))
 
@@ -348,18 +516,7 @@ def detail(request_no):
     if application is None:
         return "Application not found.", 404
 
-    attachments_by_section = {}
-
-    for section in SECTION_LABELS.keys():
-        attachments_by_section[section] = []
-
-    for attachment in attachments:
-        section_name = attachment["section_name"]
-
-        if section_name not in attachments_by_section:
-            attachments_by_section[section_name] = []
-
-        attachments_by_section[section_name].append(attachment)
+    attachments_by_section = build_attachments_by_section(attachments)
 
     edit_logs = pccim_service.get_edit_logs_by_request_no(request_no)
 
@@ -382,18 +539,7 @@ def edit(request_no):
     if application is None:
         return "Application not found.", 404
 
-    attachments_by_section = {}
-
-    for section in SECTION_LABELS.keys():
-        attachments_by_section[section] = []
-
-    for attachment in attachments:
-        section_name = attachment["section_name"]
-
-        if section_name not in attachments_by_section:
-            attachments_by_section[section_name] = []
-
-        attachments_by_section[section_name].append(attachment)
+    attachments_by_section = build_attachments_by_section(attachments)
 
     if request.method == "POST":
         content_input_mode = application["content_input_mode"]
@@ -432,71 +578,93 @@ def edit(request_no):
                 if not request.form.get(field, "").strip():
                     return f"{field} is required.", 400
 
-        update_data = {
-            "title": request.form.get("title", "").strip(),
-            "in_dn": request.form.get("in_dn", "").strip(),
-            "create_date": request.form.get("create_date", "").strip(),
-            "close_date": request.form.get("close_date", "").strip(),
-            "machine_or_tool": request.form.get("machine_or_tool", "").strip(),
-            "module_name": request.form.get("module_name", "").strip(),
-            "department": request.form.get("department", "").strip(),
-            "author": request.form.get("author", "").strip(),
+        if content_input_mode == "manual":
+            update_data = {
+                "title": request.form.get("title", "").strip(),
+                "in_dn": request.form.get("in_dn", "").strip(),
+                "create_date": request.form.get("create_date", "").strip(),
+                "close_date": request.form.get("close_date", "").strip(),
+                "machine_or_tool": request.form.get("machine_or_tool", "").strip(),
+                "module_name": request.form.get("module_name", "").strip(),
+                "department": request.form.get("department", "").strip(),
+                "author": request.form.get("author", "").strip(),
 
-            "problem_description": request.form.get("problem_description", "").strip(),
-            "problem_timeline": request.form.get("problem_timeline", "").strip(),
+                "problem_description": request.form.get("problem_description", "").strip(),
+                "problem_timeline": request.form.get("problem_timeline", "").strip(),
 
-            "action_taken": request.form.get("action_taken", "").strip(),
+                "action_taken": request.form.get("action_taken", "").strip(),
 
-            "impact": request.form.get("impact", "").strip(),
+                "impact": request.form.get("impact", "").strip(),
 
-            "container": request.form.get("container", "").strip(),
+                "container": request.form.get("container", "").strip(),
 
-            "need_help": request.form.get("need_help", "").strip(),
+                "need_help": request.form.get("need_help", "").strip(),
 
-            "root_cause_description": request.form.get("root_cause_description", "").strip(),
-            "root_cause_possible_cause": request.form.get("root_cause_possible_cause", "").strip(),
-            "root_cause_troubleshooting_timeline": request.form.get("root_cause_troubleshooting_timeline", "").strip(),
+                "root_cause_description": request.form.get("root_cause_description", "").strip(),
+                "root_cause_possible_cause": request.form.get("root_cause_possible_cause", "").strip(),
+                "root_cause_troubleshooting_timeline": request.form.get("root_cause_troubleshooting_timeline", "").strip(),
 
-            "solution": request.form.get("solution", "").strip(),
+                "solution": request.form.get("solution", "").strip(),
 
-            "implementation": request.form.get("implementation", "").strip(),
+                "implementation": request.form.get("implementation", "").strip(),
 
-            "monitoring": request.form.get("monitoring", "").strip(),
-            
-            "labels": request.form.getlist("labels"),
-        }
+                "monitoring": request.form.get("monitoring", "").strip(),
+
+                "labels": request.form.getlist("labels"),
+            }
+
+        else:
+            # PPT mode edit:
+            # 只更新 Basic Information，不覆蓋 Problem 到 Monitoring 欄位
+            update_data = {
+                "title": request.form.get("title", "").strip(),
+                "in_dn": request.form.get("in_dn", "").strip(),
+                "create_date": request.form.get("create_date", "").strip(),
+                "close_date": request.form.get("close_date", "").strip(),
+                "machine_or_tool": request.form.get("machine_or_tool", "").strip(),
+                "module_name": request.form.get("module_name", "").strip(),
+                "department": request.form.get("department", "").strip(),
+                "author": request.form.get("author", "").strip(),
+
+                "labels": request.form.getlist("labels"),
+            }
 
         pccim_service.update_application(request_no, update_data)
 
+        if content_input_mode == "manual":
+            for section in ATTACHMENT_SECTIONS:
+                for i in range(1, Config.MAX_IMAGE_COUNT + 1):
+                    file = request.files.get(f"{section}_attachment_{i}")
+                    remark = request.form.get(
+                        f"{section}_attachment_remark_{i}",
+                        "",
+                    ).strip()
 
+                    if file and file.filename:
+                        if FileHelper.allowed_attachment(file.filename):
+                            saved_filename = FileHelper.save_attachment(
+                                file=file,
+                                request_no=request_no,
+                                section_name=section,
+                                attachment_no=i,
+                            )
 
-        for section in ATTACHMENT_SECTIONS:
-            for i in range(1, Config.MAX_IMAGE_COUNT + 1):
-                file = request.files.get(f"{section}_attachment_{i}")
-                remark = request.form.get(f"{section}_attachment_remark_{i}", "").strip()
+                            attachment = Attachment(
+                                request_no=request_no,
+                                section_name=section,
+                                attachment_no=i,
+                                file_path=saved_filename,
+                                original_file_name=file.filename,
+                                file_type=FileHelper.get_extension(file.filename),
+                                remark=remark,
+                            )
 
-                if file and file.filename:
-                    if FileHelper.allowed_attachment(file.filename):
-                        saved_filename = FileHelper.save_attachment(
-                            file=file,
-                            request_no=request_no,
-                            section_name=section,
-                            attachment_no=i,
-                        )
-
-                        attachment = Attachment(
-                            request_no=request_no,
-                            section_name=section,
-                            attachment_no=i,
-                            file_path=saved_filename,
-                            original_file_name=file.filename,
-                            file_type=FileHelper.get_extension(file.filename),
-                            remark=remark,
-                        )
-
-                        pccim_service.add_attachment(attachment)
-                    else:
-                        return f"{SECTION_LABELS.get(section, section)} attachment {i} file type is not supported.", 400
+                            pccim_service.add_attachment(attachment)
+                        else:
+                            return (
+                                f"{SECTION_LABELS.get(section, section)} "
+                                f"attachment {i} file type is not supported."
+                            ), 400
 
         pccim_service.add_edit_log(
             request_no=request_no,
