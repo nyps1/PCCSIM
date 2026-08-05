@@ -43,16 +43,21 @@
 <script>
     const fileInput = document.getElementById('batch_ppt_files');
     const uploadText = document.querySelector('.upload-text');
+    const dropzone = document.querySelector('.upload-dropzone');
     
     fileInput.addEventListener('change', function() {
         if (this.files && this.files.length > 0) {
             uploadText.textContent = 'Selected ' + this.files.length + ' file(s) for import';
             uploadText.style.color = 'var(--primary-color)';
             uploadText.style.fontWeight = 'bold';
+            dropzone.style.borderColor = 'var(--primary-color)';
+            dropzone.style.backgroundColor = 'rgba(0, 123, 255, 0.05)';
         } else {
             uploadText.textContent = 'Click to select multiple files or drag and drop';
             uploadText.style.color = '#555';
             uploadText.style.fontWeight = 'normal';
+            dropzone.style.borderColor = '#ccc';
+            dropzone.style.backgroundColor = 'transparent';
         }
     });
 </script>

@@ -471,10 +471,13 @@
                     // Reset upload text when form resets
                     const pptFileInput = document.getElementById('ppt_file');
                     const uploadText = document.querySelector('.upload-dropzone .upload-text');
-                    if (pptFileInput && uploadText) {
+                    const dropzone = document.querySelector('.upload-dropzone');
+                    if (pptFileInput && uploadText && dropzone) {
                         uploadText.textContent = 'Click to upload or drag and drop';
                         uploadText.style.color = '';
                         uploadText.style.fontWeight = 'normal';
+                        dropzone.style.borderColor = '';
+                        dropzone.style.backgroundColor = '';
                     }
                 }, 0);
             });
@@ -483,8 +486,9 @@
         // Add file selection feedback for PPT Upload
         const pptFileInput = document.getElementById('ppt_file');
         const uploadText = document.querySelector('.upload-dropzone .upload-text');
+        const dropzone = document.querySelector('.upload-dropzone');
 
-        if (pptFileInput && uploadText) {
+        if (pptFileInput && uploadText && dropzone) {
             const defaultText = uploadText.textContent;
             
             pptFileInput.addEventListener('change', function() {
@@ -492,10 +496,14 @@
                     uploadText.textContent = 'Selected File: ' + this.files[0].name;
                     uploadText.style.color = 'var(--primary-color)'; // Use theme color
                     uploadText.style.fontWeight = 'bold';
+                    dropzone.style.borderColor = 'var(--primary-color)';
+                    dropzone.style.backgroundColor = 'rgba(0, 123, 255, 0.05)';
                 } else {
                     uploadText.textContent = defaultText;
                     uploadText.style.color = '';
                     uploadText.style.fontWeight = 'normal';
+                    dropzone.style.borderColor = '';
+                    dropzone.style.backgroundColor = '';
                 }
             });
         }
