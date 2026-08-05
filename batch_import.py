@@ -6,6 +6,8 @@ from pathlib import Path
 from werkzeug.datastructures import FileStorage
 from app import app, pccim_service
 from services.ppt_importer import ppt_importer
+from utils.file_helper import FileHelper
+from models.attachment import Attachment
 
 def run_batch_import():
     print("=" * 50)
@@ -63,6 +65,26 @@ def run_batch_import():
                     # Create attachments in DB
                     for att in attachments:
                         pccim_service.add_attachment(att)
+                        
+                    # Save the uploaded PPT itself as an attachment
+                    f.seek(0)
+                    saved_filename = FileHelper.save_attachment(
+                        file=file_storage,
+                        request_no=request_no,
+                        section_name="content_ppt",
+                        attachment_no=1,
+                    )
+                    
+                    ppt_attachment = Attachment(
+                        request_no=request_no,
+                        section_name="content_ppt",
+                        attachment_no=1,
+                        file_path=saved_filename,
+                        original_file_name=filename,
+                        file_type=FileHelper.get_extension(filename),
+                        remark="Uploaded content PPT (Batch Import)",
+                    )
+                    pccim_service.add_attachment(ppt_attachment)
                         
                 print("SUCCESS")
                 success_count += 1

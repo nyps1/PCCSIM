@@ -275,6 +275,26 @@ def batch_import_page():
                     for att in attachments:
                         pccim_service.add_attachment(att)
                         
+                    # Save the uploaded PPT itself as an attachment
+                    file.seek(0)
+                    saved_filename = FileHelper.save_attachment(
+                        file=file,
+                        request_no=request_no,
+                        section_name="content_ppt",
+                        attachment_no=1,
+                    )
+                    
+                    ppt_attachment = Attachment(
+                        request_no=request_no,
+                        section_name="content_ppt",
+                        attachment_no=1,
+                        file_path=saved_filename,
+                        original_file_name=file.filename,
+                        file_type=FileHelper.get_extension(file.filename),
+                        remark="Uploaded content PPT (Batch Import)",
+                    )
+                    pccim_service.add_attachment(ppt_attachment)
+                        
                     success_count += 1
                 except Exception as e:
                     app.logger.exception("Failed to import PPT %s: %s", file.filename, e)
