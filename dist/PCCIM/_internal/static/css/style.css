@@ -381,3 +381,160 @@ tr:hover {
     border-radius: 8px;
     padding: 8px 12px;
 }
+
+.import-card {
+    border: 2px dashed #4a90e2;
+    background-color: #f8fbff;
+}
+
+.labels-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.labels-select {
+    height: 120px;
+}
+
+.add-label-group {
+    display: flex;
+    gap: 10px;
+}
+
+.add-label-group input {
+    flex-grow: 1;
+}
+
+.label-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.label-badge {
+    background-color: #e0ebf9;
+    color: #1f4e79;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    border: 1px solid #b8d4f0;
+}
+
+/* 基礎卡片與全域字型優化 */
+.card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    margin-bottom: 20px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.card h2 {
+    color: #1e293b;
+    font-size: 1.25rem;
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.section-hint {
+    color: #64748b;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-top: 16px;
+    margin-bottom: 0;
+}
+
+/* 現代化單選鈕切換組 */
+.radio-toggle-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.toggle-item {
+    cursor: pointer;
+}
+
+.toggle-item input[type="radio"] {
+    display: none; /* 隱藏傳統原生單選鈕 */
+}
+
+.toggle-content {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.toggle-content .text-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.toggle-content .title {
+    font-weight: 600;
+    color: #334155;
+}
+
+.toggle-content .desc {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+/* 點選狀態樣式 */
+.toggle-item input[type="radio"]:checked + .toggle-content {
+    border-color: #2563eb;
+    background-color: #eff6ff;
+}
+
+.toggle-item input[type="radio"]:checked + .toggle-content .title {
+    color: #2563eb;
+}
+
+/* 拖曳上傳區域 */
+.upload-dropzone {
+    position: relative;
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    background: #f8fafc;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.upload-dropzone:hover {
+    border-color: #2563eb;
+    background: #f1f5f9;
+}
+
+.upload-dropzone input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0; /* 隱藏原生檔案選擇鈕 */
+    cursor: pointer;
+}
+
+.dropzone-content .upload-text {
+    font-weight: 500;
+    color: #334155;
+    margin: 0 0 6px 0;
+}
+
+.dropzone-content .upload-types {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin: 0;
+}

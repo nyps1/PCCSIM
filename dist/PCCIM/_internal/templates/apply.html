@@ -46,7 +46,7 @@
 {% endmacro %}
 
 
-<form method="POST" enctype="multipart/form-data">
+<form method="POST" enctype="multipart/form-data" id="apply-form">
 
     <!-- Basic Information -->
     <section class="card">
@@ -102,71 +102,93 @@
                 <label>Author <span class="required">*</span></label>
                 <input type="text" name="author" required>
             </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Labels</label>
+
+                <div class="labels-container">
+                    <select name="labels" id="labels-select" multiple class="labels-select">
+                        {% for label in all_labels %}
+                        <option value="{{ label.id }}">{{ label.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <div class="add-label-group">
+                        <input
+                            type="text"
+                            id="new-label-name"
+                            placeholder="New label name..."
+                        >
+                        <button
+                            type="button"
+                            id="btn-add-label"
+                            class="btn btn-secondary"
+                        >
+                            Add
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
 
-    <!-- Content Input Mode -->
+    <!-- Detail Input Method -->
     <section class="card">
-        <h2>Content Input Mode</h2>
+        <h2>Detail Input Method</h2>
 
-        <div class="form-group">
-            <label>How would you like to provide the content? <span class="required">*</span></label>
+        <!-- 卡片切換鈕（無 Emoji 版本） -->
+        <div class="radio-toggle-group">
+            <label class="toggle-item">
+                <input type="radio" name="detail_input_mode" value="manual" checked>
+                <div class="toggle-content">
+                    <div class="text-group">
+                        <span class="title">Manually</span>
+                    </div>
+                </div>
+            </label>
 
-            <div class="radio-group">
-                <label>
-                    <input
-                        type="radio"
-                        name="content_input_mode"
-                        value="manual"
-                        checked
-                    >
-                    Manual Input
-                </label>
+            <label class="toggle-item">
+                <input type="radio" name="detail_input_mode" value="ppt">
+                <div class="toggle-content">
+                    <div class="text-group">
+                        <span class="title">PPT Upload</span>
+                    </div>
+                </div>
+            </label>
+        </div>
 
-                <label>
-                    <input
-                        type="radio"
-                        name="content_input_mode"
-                        value="ppt"
-                    >
-                    Upload Completed PPT
-                </label>
+        <p class="section-hint">
+            Choose Manually to fill in Problem, Action Taken, Impact, Containment,
+            Root Cause, Solution, Implementation and Monitoring by yourself.
+            Choose PPT Upload to import these detail sections from a PPT/PPTX file.
+        </p>
+    </section>
+
+    <!-- PPT Upload Section -->
+    <section id="ppt-upload-section" class="card" style="display: none;">
+        <h2>PPT Upload</h2>
+        
+        <p class="section-hint">
+            Upload a PCCSIM PPT or PPTX file. Basic Information above will still be
+            submitted from this form. The system should parse the detail content
+            from the uploaded PPT.
+        </p>
+
+        <!-- 拖曳上傳區域（無 Emoji 版本） -->
+        <div class="upload-dropzone">
+            <input type="file" id="ppt_file" name="ppt_file" accept=".ppt,.pptx" required>
+            <div class="dropzone-content">
+                <p class="upload-text">Click to upload or drag and drop</p>
+                <p class="upload-types">PPT or PPTX up to 10MB</p>
             </div>
         </div>
     </section>
 
 
-    <!-- Completed PPT Upload Block -->
-    <div id="contentPptBlock" style="display: none;">
-        <section class="card">
-            <h2>Upload Completed PPT</h2>
 
-            <div class="content-grid single">
-                <div class="form-group">
-                    <label>Completed PPT File <span class="required">*</span></label>
-                    <input
-                        type="file"
-                        id="content_ppt_file"
-                        name="content_ppt_file"
-                        accept=".ppt,.pptx"
-                    >
-                </div>
-
-                <div class="form-group">
-                    <label>Completed PPT Remark</label>
-                    <textarea
-                        name="content_ppt_remark"
-                        placeholder="Enter remark for uploaded completed PPT"
-                    ></textarea>
-                </div>
-            </div>
-        </section>
-    </div>
-
-
-    <!-- Manual Content Block -->
-    <div id="manualContentBlock">
+    <!-- Manual Detail Section: Problem to Monitoring -->
+    <div id="manual-detail-section">
 
         <!-- Problem -->
         <section class="card">
@@ -361,78 +383,195 @@
 
     <div class="button-area">
         <button type="reset" class="btn secondary">Clear</button>
-        <button type="submit" class="btn primary">Submit Application</button>
+        <button type="submit" class="btn primary" id="submit-button">
+            Submit Application
+        </button>
     </div>
 
 </form>
 
 
 <script>
-    function setFieldsDisabled(container, disabled) {
-        const fields = container.querySelectorAll("input, textarea, select");
+    function setSectionInputsDisabled(section, disabled) {
+        if (!section) {
+            return;
+        }
 
-        fields.forEach(function (field) {
-            field.disabled = disabled;
+        const inputs = section.querySelectorAll('input, textarea, select, button');
+
+        inputs.forEach(function(input) {
+            if (input.type === 'submit' || input.type === 'reset') {
+                return;
+            }
+
+            input.disabled = disabled;
         });
     }
 
-    function toggleContentInputMode() {
-        const selectedMode = document.querySelector(
-            'input[name="content_input_mode"]:checked'
-        ).value;
+    function toggleDetailInputMode() {
+        const selectedModeInput = document.querySelector(
+            'input[name="detail_input_mode"]:checked'
+        );
 
-        const manualBlock = document.getElementById("manualContentBlock");
-        const pptBlock = document.getElementById("contentPptBlock");
-        const contentPptFile = document.getElementById("content_ppt_file");
+        if (!selectedModeInput) {
+            return;
+        }
 
-        const manualRequiredFields = [
-            "problem_description",
-            "action_taken",
-            "impact",
-            "container",
-            "need_help",
-            "root_cause_description",
-            "solution"
-        ];
+        const selectedMode = selectedModeInput.value;
+        const manualDetailSection = document.getElementById('manual-detail-section');
+        const pptUploadSection = document.getElementById('ppt-upload-section');
+        const pptFileInput = document.getElementById('ppt_file');
+        const submitButton = document.getElementById('submit-button');
 
-        if (selectedMode === "manual") {
-            manualBlock.style.display = "block";
-            pptBlock.style.display = "none";
+        if (selectedMode === 'manual') {
+            manualDetailSection.style.display = '';
+            pptUploadSection.style.display = 'none';
 
-            setFieldsDisabled(manualBlock, false);
-            setFieldsDisabled(pptBlock, true);
+            setSectionInputsDisabled(manualDetailSection, false);
+            setSectionInputsDisabled(pptUploadSection, true);
 
-            contentPptFile.required = false;
+            if (pptFileInput) {
+                pptFileInput.required = false;
+            }
 
-            manualRequiredFields.forEach(function (fieldId) {
-                const field = document.getElementById(fieldId);
-                if (field) {
-                    field.required = true;
-                }
-            });
+            if (submitButton) {
+                submitButton.textContent = 'Submit Application';
+            }
         } else {
-            manualBlock.style.display = "none";
-            pptBlock.style.display = "block";
+            manualDetailSection.style.display = 'none';
+            pptUploadSection.style.display = '';
 
-            setFieldsDisabled(manualBlock, true);
-            setFieldsDisabled(pptBlock, false);
+            setSectionInputsDisabled(manualDetailSection, true);
+            setSectionInputsDisabled(pptUploadSection, false);
 
-            contentPptFile.required = true;
+            if (pptFileInput) {
+                pptFileInput.required = true;
+            }
 
-            manualRequiredFields.forEach(function (fieldId) {
-                const field = document.getElementById(fieldId);
-                if (field) {
-                    field.required = false;
-                }
-            });
+            if (submitButton) {
+                submitButton.textContent = 'Upload PPT and Submit';
+            }
         }
     }
 
-    document.querySelectorAll('input[name="content_input_mode"]').forEach(function (radio) {
-        radio.addEventListener("change", toggleContentInputMode);
+    document.querySelectorAll('input[name="detail_input_mode"]').forEach(function(radio) {
+        radio.addEventListener('change', toggleDetailInputMode);
     });
 
-    toggleContentInputMode();
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleDetailInputMode();
+
+        const applyForm = document.getElementById('apply-form');
+
+        if (applyForm) {
+            applyForm.addEventListener('reset', function() {
+                setTimeout(function() {
+                    toggleDetailInputMode();
+                    
+                    // Reset upload text when form resets
+                    const pptFileInput = document.getElementById('ppt_file');
+                    const uploadText = document.querySelector('.upload-dropzone .upload-text');
+                    const dropzone = document.querySelector('.upload-dropzone');
+                    if (pptFileInput && uploadText && dropzone) {
+                        uploadText.textContent = 'Click to upload or drag and drop';
+                        uploadText.style.color = '';
+                        uploadText.style.fontWeight = 'normal';
+                        dropzone.style.borderColor = '';
+                        dropzone.style.backgroundColor = '';
+                        dropzone.style.borderStyle = '';
+                    }
+                }, 0);
+            });
+        }
+
+        // Add file selection feedback for PPT Upload
+        const pptFileInput = document.getElementById('ppt_file');
+        const uploadText = document.querySelector('.upload-dropzone .upload-text');
+        const dropzone = document.querySelector('.upload-dropzone');
+
+        if (pptFileInput && uploadText && dropzone) {
+            const defaultText = uploadText.textContent;
+            
+            pptFileInput.addEventListener('change', function() {
+                if (this.files && this.files.length > 0) {
+                    uploadText.textContent = 'Selected File: ' + this.files[0].name;
+                    uploadText.style.color = '#e74c3c'; // Red text
+                    uploadText.style.fontWeight = 'bold';
+                    dropzone.style.borderColor = '#e74c3c'; // Red border
+                    dropzone.style.backgroundColor = 'rgba(231, 76, 60, 0.05)'; // Light red background
+                    dropzone.style.borderStyle = 'solid'; // Solid border
+                } else {
+                    uploadText.textContent = defaultText;
+                    uploadText.style.color = '';
+                    uploadText.style.fontWeight = 'normal';
+                    dropzone.style.borderColor = '';
+                    dropzone.style.backgroundColor = '';
+                    dropzone.style.borderStyle = '';
+                }
+            });
+        }
+    });
+</script>
+
+
+<script>
+    // Handle new label creation
+    const addLabelButton = document.getElementById('btn-add-label');
+
+    if (addLabelButton) {
+        addLabelButton.addEventListener('click', function() {
+            const input = document.getElementById('new-label-name');
+            const name = input.value.trim();
+
+            if (!name) {
+                return;
+            }
+
+            fetch('{{ url_for("create_label_api") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: name
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    if (
+                        window.choicesInstances &&
+                        window.choicesInstances['labels-select']
+                    ) {
+                        window.choicesInstances['labels-select'].setChoices([
+                            {
+                                value: data.id.toString(),
+                                label: data.name,
+                                selected: true
+                            }
+                        ], 'value', 'label', false);
+                    } else {
+                        const select = document.getElementById('labels-select');
+                        const option = document.createElement('option');
+
+                        option.value = data.id;
+                        option.text = data.name;
+                        option.selected = true;
+
+                        select.add(option);
+                    }
+
+                    input.value = '';
+                }
+            })
+            .catch(err => {
+                console.error('Error adding label:', err);
+                alert('An error occurred while adding the label.');
+            });
+        });
+    }
 </script>
 
 {% endblock %}

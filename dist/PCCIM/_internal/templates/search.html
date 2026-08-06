@@ -90,16 +90,17 @@
                 >
             </div>
 
+
+
             <div class="form-group">
-                <label>Content Mode</label>
-                <select name="content_input_mode">
-                    <option value="">All</option>
-                    <option value="manual" {% if filters.content_input_mode == "manual" %}selected{% endif %}>
-                        Manual Input
-                    </option>
-                    <option value="ppt" {% if filters.content_input_mode == "ppt" %}selected{% endif %}>
-                        Uploaded PPT
-                    </option>
+                <label>Label</label>
+                <select name="label_id">
+                    <option value="">All Labels</option>
+                    {% for label in all_labels %}
+                        <option value="{{ label.id }}" {% if filters.label_id == label.id | string %}selected{% endif %}>
+                            {{ label.name }}
+                        </option>
+                    {% endfor %}
                 </select>
             </div>
 
