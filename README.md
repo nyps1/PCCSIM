@@ -31,12 +31,9 @@ python app.py
 
 ### 3. 批次匯入舊有 PPT (Batch Import)
 
-若您有舊版的 PowerPoint 報告需要匯入系統建檔，請使用 `batch_import.py` 獨立腳本。該腳本會在背景掃描指定資料夾，將資料寫入資料庫，並將成功匯入的檔案自動移動至 `processed/` 子目錄中。
-
-```bash
-python batch_import.py
-```
-執行後，系統會提示您輸入要掃描的資料夾路徑。請輸入絕對路徑或相對路徑（例如：`./test_batch`）。
+若您有舊版的 PowerPoint 報告需要匯入系統建檔，您可以透過網頁介面雙擊左上角「PCCSIM」Logo 進入隱藏的 **Batch Import PPTs** 頁面。該頁面提供兩種匯入方式：
+1. **瀏覽器檔案多選/拖曳**：一次選取多個 `.ppt` 或 `.pptx` 檔案進行線上匯入。
+2. **本機資料夾路徑掃描**：輸入伺服器或本機的資料夾路徑（例如：`C:\Users\User\Documents\PPT_Reports`），系統會自動掃描該資料夾下所有 PPT 檔並進行建檔，原始檔案將完好保留於原處。
 
 ## PPT 模板佔位符 (Placeholder) 設定指南
 

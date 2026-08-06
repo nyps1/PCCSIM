@@ -248,68 +248,85 @@ def index():
 
 @app.route("/batch_import_page", methods=["GET", "POST"])
 def batch_import_page():
+    directory_results = None
+
     if request.method == "POST":
-        files = request.files.getlist("batch_ppt_files")
-        if not files or all(f.filename == '' for f in files):
-            flash("No files selected.", "error")
-            return redirect(request.url)
-            
-        success_count = 0
-        error_count = 0
-        
-        for file in files:
-            if file and FileHelper.allowed_attachment(file.filename):
-                try:
-                    request_no = pccim_service.generate_request_no()
-                    apply_date = pccim_service.get_today()
-                    
-                    application, attachments = ppt_importer.import_ppt(file, request_no, apply_date)
-                    
-                    # Ensure content_input_mode is ppt since it was parsed from PPT
-                    application["content_input_mode"] = "ppt"
-                    
-                    # Create application in DB
-                    pccim_service.create_application(application)
-                    
-                    # Create attachments in DB
-                    for att in attachments:
-                        pccim_service.add_attachment(att)
-                        
-                    # Save the uploaded PPT itself as an attachment
-                    file.seek(0)
-                    saved_filename = FileHelper.save_attachment(
-                        file=file,
-                        request_no=request_no,
-                        section_name="content_ppt",
-                        attachment_no=1,
-                    )
-                    
-                    ppt_attachment = Attachment(
-                        request_no=request_no,
-                        section_name="content_ppt",
-                        attachment_no=1,
-                        file_path=saved_filename,
-                        original_file_name=file.filename,
-                        file_type=FileHelper.get_extension(file.filename),
-                        remark="Uploaded content PPT (Batch Import)",
-                    )
-                    pccim_service.add_attachment(ppt_attachment)
-                        
-                    success_count += 1
-                except Exception as e:
-                    app.logger.exception("Failed to import PPT %s: %s", file.filename, e)
-                    error_count += 1
+        action_type = request.form.get("action_type", "")
+
+        if action_type == "directory":
+            folder_path = request.form.get("folder_path", "").strip()
+            if not folder_path:
+                flash("Please enter a valid folder path.", "error")
             else:
-                error_count += 1 # Unallowed extension
-                
-        if error_count > 0:
-            flash(f"Batch import completed: {success_count} succeeded, {error_count} failed.", "error")
+                directory_results = pccim_service.import_batch_from_directory(folder_path)
+                if not directory_results["success"]:
+                    flash(directory_results["message"], "error")
+                else:
+                    flash(directory_results["message"], "success")
+            return render_template("batch_upload.html", directory_results=directory_results)
+
         else:
-            flash(f"Batch import completed successfully: {success_count} file(s) imported.", "success")
+            files = request.files.getlist("batch_ppt_files")
+            if not files or all(f.filename == '' for f in files):
+                flash("No files selected.", "error")
+                return redirect(request.url)
+                
+            success_count = 0
+            error_count = 0
             
-        return redirect(url_for("batch_import_page"))
-        
-    return render_template("batch_upload.html")
+            for file in files:
+                if file and FileHelper.allowed_attachment(file.filename):
+                    try:
+                        request_no = pccim_service.generate_request_no()
+                        apply_date = pccim_service.get_today()
+                        
+                        application, attachments = ppt_importer.import_ppt(file, request_no, apply_date)
+                        
+                        # Ensure content_input_mode is ppt since it was parsed from PPT
+                        application.content_input_mode = "ppt"
+                        
+                        # Create application in DB
+                        pccim_service.create_application(application)
+                        
+                        # Create attachments in DB
+                        for att in attachments:
+                            pccim_service.add_attachment(att)
+                            
+                        # Save the uploaded PPT itself as an attachment
+                        file.seek(0)
+                        saved_filename = FileHelper.save_attachment(
+                            file=file,
+                            request_no=request_no,
+                            section_name="content_ppt",
+                            attachment_no=1,
+                        )
+                        
+                        ppt_attachment = Attachment(
+                            request_no=request_no,
+                            section_name="content_ppt",
+                            attachment_no=1,
+                            file_path=saved_filename,
+                            original_file_name=file.filename,
+                            file_type=FileHelper.get_extension(file.filename),
+                            remark="Uploaded content PPT (Batch Import)",
+                        )
+                        pccim_service.add_attachment(ppt_attachment)
+                            
+                        success_count += 1
+                    except Exception as e:
+                        app.logger.exception("Failed to import PPT %s: %s", file.filename, e)
+                        error_count += 1
+                else:
+                    error_count += 1 # Unallowed extension
+                    
+            if error_count > 0:
+                flash(f"Batch import completed: {success_count} succeeded, {error_count} failed.", "error")
+            else:
+                flash(f"Batch import completed successfully: {success_count} file(s) imported.", "success")
+                
+            return redirect(url_for("batch_import_page"))
+            
+    return render_template("batch_upload.html", directory_results=directory_results)
 
 
 @app.route("/api/labels", methods=["POST"])

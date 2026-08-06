@@ -1,7 +1,13 @@
+import os
+import glob
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 import sqlite3
 from database.db_manager import DatabaseManager
+from werkzeug.datastructures import FileStorage
+from services.ppt_importer import ppt_importer
+from utils.file_helper import FileHelper
+from models.attachment import Attachment
 
 
 class PCCIMService:
@@ -362,3 +368,102 @@ class PCCIMService:
 
         conn.close()
         return rows
+
+    def import_batch_from_directory(self, folder_path: str) -> Dict[str, Any]:
+        """
+        Scan a local directory for PPT/PPTX files and import them into the system.
+        """
+        clean_path = folder_path.strip().strip('"\'')
+        if not clean_path or not os.path.exists(clean_path) or not os.path.isdir(clean_path):
+            return {
+                "success": False,
+                "message": f"Directory '{folder_path}' does not exist or is not a valid folder.",
+                "total": 0,
+                "success_count": 0,
+                "error_count": 0,
+                "details": []
+            }
+
+        search_pattern_pptx = os.path.join(clean_path, "*.pptx")
+        search_pattern_ppt = os.path.join(clean_path, "*.ppt")
+        files = glob.glob(search_pattern_pptx) + glob.glob(search_pattern_ppt)
+
+        if not files:
+            return {
+                "success": True,
+                "message": f"No .ppt or .pptx files found in directory '{clean_path}'.",
+                "total": 0,
+                "success_count": 0,
+                "error_count": 0,
+                "details": []
+            }
+
+        details = []
+        success_count = 0
+        error_count = 0
+
+        for file_path in files:
+            filename = os.path.basename(file_path)
+            try:
+                with open(file_path, "rb") as f:
+                    file_storage = FileStorage(
+                        stream=f,
+                        filename=filename,
+                        content_type="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                    )
+
+                    request_no = self.generate_request_no()
+                    apply_date = self.get_today()
+
+                    application, attachments = ppt_importer.import_ppt(file_storage, request_no, apply_date)
+                    application.content_input_mode = "ppt"
+
+                    self.create_application(application)
+
+                    for att in attachments:
+                        self.add_attachment(att)
+
+                    # Save the original PPT file as an attachment
+                    f.seek(0)
+                    saved_filename = FileHelper.save_attachment(
+                        file=file_storage,
+                        request_no=request_no,
+                        section_name="content_ppt",
+                        attachment_no=1,
+                    )
+
+                    ppt_attachment = Attachment(
+                        request_no=request_no,
+                        section_name="content_ppt",
+                        attachment_no=1,
+                        file_path=saved_filename,
+                        original_file_name=filename,
+                        file_type=FileHelper.get_extension(filename),
+                        remark="Uploaded content PPT (Batch Directory Import)",
+                    )
+                    self.add_attachment(ppt_attachment)
+
+                    success_count += 1
+                    details.append({
+                        "filename": filename,
+                        "status": "success",
+                        "request_no": request_no,
+                        "message": "Successfully imported"
+                    })
+            except Exception as e:
+                error_count += 1
+                details.append({
+                    "filename": filename,
+                    "status": "error",
+                    "request_no": "-",
+                    "message": str(e)
+                })
+
+        return {
+            "success": True,
+            "message": f"Directory scan complete: {success_count} succeeded, {error_count} failed out of {len(files)} file(s).",
+            "total": len(files),
+            "success_count": success_count,
+            "error_count": error_count,
+            "details": details
+        }

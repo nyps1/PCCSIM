@@ -1,30 +1,33 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="card">
-    <h2>Batch Import PPTs</h2>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-messages" style="margin-bottom: 1.5rem;">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}" style="padding: 12px 16px; border-radius: 6px; margin-bottom: 10px; background-color: {% if category == 'success' %}#d4edda{% elif category == 'error' %}#f8d7da{% else %}#e2e3e5{% endif %}; color: {% if category == 'success' %}#155724{% elif category == 'error' %}#721c24{% else %}#383d41{% endif %}; border: 1px solid {% if category == 'success' %}#c3e6cb{% elif category == 'error' %}#f5c6cb{% else %}#d6d8db{% endif %}; font-weight: 500;">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- Section 1: Upload Multiple Files directly -->
+<section class="card" style="margin-bottom: 2rem;">
+    <h2>1. Upload PPT Files</h2>
 
     <div class="detail-content">
         <p>
-            Select multiple PowerPoint (.ppt, .pptx) files to import them into the system at once. 
-            All parsed data and attachments will be saved to the database.
+            Select multiple PowerPoint (.ppt, .pptx) files from your computer to import them into the system at once. 
+            All parsed data and original PPT files will be saved to the database.
         </p>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="flash-messages" style="margin-top: 1rem;">
-          {% for category, message in messages %}
-            <div class="alert alert-{{ category }}" style="padding: 10px; border-radius: 4px; margin-bottom: 10px; background-color: {% if category == 'success' %}#d4edda{% elif category == 'error' %}#f8d7da{% else %}#e2e3e5{% endif %}; color: {% if category == 'success' %}#155724{% elif category == 'error' %}#721c24{% else %}#383d41{% endif %}; border: 1px solid {% if category == 'success' %}#c3e6cb{% elif category == 'error' %}#f5c6cb{% else %}#d6d8db{% endif %};">
-              {{ message }}
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
-
     <form method="POST" enctype="multipart/form-data">
-        <div class="upload-dropzone" style="margin-top: 1.5rem; border: 2px dashed #ccc; padding: 3rem 1rem; text-align: center; border-radius: 8px; position: relative;">
+        <input type="hidden" name="action_type" value="upload">
+        <div class="upload-dropzone" style="margin-top: 1.5rem; border: 2px dashed #ccc; padding: 2.5rem 1rem; text-align: center; border-radius: 8px; position: relative; transition: all 0.3s ease;">
             <input type="file" id="batch_ppt_files" name="batch_ppt_files" accept=".ppt,.pptx" multiple required style="width: 100%; height: 100%; position: absolute; top: 0; left: 0; opacity: 0; cursor: pointer;">
             <div class="dropzone-content" style="pointer-events: none;">
                 <p class="upload-text" style="font-size: 1.2rem; color: #555; margin-bottom: 0.5rem;">Click to select multiple files or drag and drop</p>
@@ -34,33 +37,117 @@
 
         <div class="button-area" style="margin-top: 1.5rem; text-align: right;">
             <button type="submit" class="btn primary" onclick="if(document.getElementById('batch_ppt_files').files.length > 0) { this.textContent='Importing... Please wait'; this.style.opacity='0.7'; }">
-                Start Batch Import
+                Start Upload & Import
             </button>
         </div>
     </form>
 </section>
+
+<!-- Section 2: Scan Local Host Directory -->
+<section class="card" style="margin-bottom: 2rem;">
+    <h2>2. Scan Local Directory Path</h2>
+
+    <div class="detail-content">
+        <p>
+            Specify a local folder path on the server host machine. The system will scan all .ppt and .pptx files in that directory and batch import them automatically without moving the original files.
+        </p>
+    </div>
+
+    <form method="POST" style="margin-top: 1.5rem;">
+        <input type="hidden" name="action_type" value="directory">
+        <div class="form-group">
+            <label for="folder_path" style="font-weight: bold; margin-bottom: 0.5rem; display: block;">Local Folder Path</label>
+            <input 
+                type="text" 
+                id="folder_path" 
+                name="folder_path" 
+                placeholder="e.g. C:\Users\User\Documents\PPT_Reports" 
+                required
+                style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem;"
+            >
+        </div>
+
+        <div class="button-area" style="margin-top: 1.5rem; text-align: right;">
+            <button type="submit" class="btn primary" onclick="if(document.getElementById('folder_path').value.trim()) { this.textContent='Scanning... Please wait'; this.style.opacity='0.7'; }">
+                Scan & Import Directory
+            </button>
+        </div>
+    </form>
+</section>
+
+<!-- Section 3: Execution Detailed Results (If available) -->
+{% if directory_results and directory_results.details %}
+<section class="card">
+    <h2>Directory Import Detailed Results</h2>
+    
+    <div style="margin-top: 1rem; margin-bottom: 1.5rem;">
+        <span style="font-size: 1.1rem; font-weight: bold; margin-right: 1.5rem;">Total Files: {{ directory_results.total }}</span>
+        <span style="font-size: 1.1rem; font-weight: bold; color: #28a745; margin-right: 1.5rem;">Succeeded: {{ directory_results.success_count }}</span>
+        <span style="font-size: 1.1rem; font-weight: bold; color: #dc3545;">Failed: {{ directory_results.error_count }}</span>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+            <thead>
+                <tr style="background-color: #f1f3f5; text-align: left; border-bottom: 2px solid #dee2e6;">
+                    <th style="padding: 12px;">Filename</th>
+                    <th style="padding: 12px;">Status</th>
+                    <th style="padding: 12px;">Request Number</th>
+                    <th style="padding: 12px;">Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in directory_results.details %}
+                <tr style="border-bottom: 1px solid #e9ecef;">
+                    <td style="padding: 12px; font-weight: 500;">{{ item.filename }}</td>
+                    <td style="padding: 12px;">
+                        {% if item.status == 'success' %}
+                            <span style="background-color: #d4edda; color: #155724; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">Success</span>
+                        {% else %}
+                            <span style="background-color: #f8d7da; color: #721c24; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;">Failed</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px;">
+                        {% if item.status == 'success' and item.request_no != '-' %}
+                            <a href="{{ url_for('detail', request_no=item.request_no) }}" target="_blank" style="color: #1f4e79; text-decoration: underline;">
+                                {{ item.request_no }}
+                            </a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px; color: #6c757d;">{{ item.message }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
 
 <script>
     const fileInput = document.getElementById('batch_ppt_files');
     const uploadText = document.querySelector('.upload-text');
     const dropzone = document.querySelector('.upload-dropzone');
     
-    fileInput.addEventListener('change', function() {
-        if (this.files && this.files.length > 0) {
-            uploadText.textContent = 'Selected ' + this.files.length + ' file(s) for import';
-            uploadText.style.color = '#e74c3c';
-            uploadText.style.fontWeight = 'bold';
-            dropzone.style.borderColor = '#e74c3c';
-            dropzone.style.backgroundColor = 'rgba(231, 76, 60, 0.05)';
-            dropzone.style.borderStyle = 'solid';
-        } else {
-            uploadText.textContent = 'Click to select multiple files or drag and drop';
-            uploadText.style.color = '#555';
-            uploadText.style.fontWeight = 'normal';
-            dropzone.style.borderColor = '#ccc';
-            dropzone.style.backgroundColor = 'transparent';
-            dropzone.style.borderStyle = 'dashed';
-        }
-    });
+    if (fileInput && uploadText && dropzone) {
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                uploadText.textContent = 'Selected ' + this.files.length + ' file(s) for import';
+                uploadText.style.color = '#e74c3c';
+                uploadText.style.fontWeight = 'bold';
+                dropzone.style.borderColor = '#e74c3c';
+                dropzone.style.backgroundColor = 'rgba(231, 76, 60, 0.05)';
+                dropzone.style.borderStyle = 'solid';
+            } else {
+                uploadText.textContent = 'Click to select multiple files or drag and drop';
+                uploadText.style.color = '#555';
+                uploadText.style.fontWeight = 'normal';
+                dropzone.style.borderColor = '#ccc';
+                dropzone.style.backgroundColor = 'transparent';
+                dropzone.style.borderStyle = 'dashed';
+            }
+        });
+    }
 </script>
 {% endblock %}

@@ -26,24 +26,18 @@
   * PPT 檔案（不論是透過 PPT 模式或是 Batch Import 模式上傳的原檔）會以卡片形式呈現，並提供 Download PowerPoint 按鈕。
   * 支援將目前的案件資料匯出為一份新的 PPTX 報告檔 (Export PPT功能)。
 
-### 1.5 隱藏版批次匯入介面 (Batch Import UI)
-* 在網頁左上角的「PCCSIM」導覽列 Logo 隱藏了彩蛋功能：**連續點擊兩下 (Double-Click)** 即可開啟批次上傳 (Batch Import PPTs) 頁面。
-* 該頁面允許使用者一次選取（或拖曳）數十個 PPT/PPTX 檔案，系統會在背景循序解析每一個檔案，將其內容、圖片、以及**原版 PPT 檔案**本身皆一併寫入至資料庫中。並透過 Flash Message 顯示成功與失敗的統計數量。
+### 1.5 批次匯入介面 (Batch Import UI)
+* **入口方式**：在網頁左上角的「PCCSIM」導覽列 Logo **連續點擊兩下 (Double-Click)** 即可進入 Batch Import 頁面。
+* **瀏覽器線上檔案上傳**：允許使用者一次選取（或拖曳）多個 PPT/PPTX 檔案，系統會在背景循序解析每一個檔案，將其內容、圖片與原版 PPT 檔案一併寫入資料庫。
+* **本機資料夾路徑掃描**：直接輸入伺服器/本機的資料夾路徑，系統會透過 `PCCIMService.import_batch_from_directory()` 自動掃描該資料夾下所有 PPT 檔並建檔，原始檔案保持完好不搬移。
+* **詳細狀態回饋**：執行後會即時列出每個檔案的處理狀態表格（包含檔名、成功/失敗狀態標籤、對應申請單號連結與錯誤詳細說明）。
 
 ---
 
-## 2. 終端機/命令列工具 (CLI Tools)
-
-### 2.1 本機批次匯入腳本 (`batch_import.py`)
-* 提供在伺服器端或本機端無介面操作的解決方案。
-* 執行 `python batch_import.py` 後，只需貼上資料夾路徑，系統即會自動掃描該資料夾下所有的 `.ppt` 與 `.pptx` 檔案進行自動匯入。
-* 匯入成功後，檔案會自動被搬移至 `processed` 子資料夾內，避免重複匯入。與網頁批次匯入一樣，原始 PPT 也會被自動儲存為系統附件，並寫入 SQLite 資料庫中。
-
----
-
-## 3. 系統底層與架構 (Architecture)
+## 2. 系統底層與架構 (Architecture)
 
 * **後端框架**：Flask (Python)。
+* **商業邏輯與批次服務**：採用 Service / Repository Pattern，將批次資料夾掃描與解析完整封裝至 `PCCIMService`，在打包為單一可執行檔 (`PCCSIM.exe`) 後亦能完整運作。
 * **資料庫**：SQLite (`database/pccim.db`)，採用 Factory Pattern (DatabaseManager) 與 Service Layer (PCCIMService) 分離資料庫操作與業務邏輯。
 * **PPT 解析引擎**：使用 `python-pptx` 函式庫來深度解析 PowerPoint XML 結構、抓取內嵌圖片、以及根據模板建立新的匯出報告。
 * **前端技術**：純 HTML, CSS (自訂樣式庫) 與原生 JavaScript，無依賴重型前端框架（如 React/Vue），確保極快的載入速度與極低的維護成本。僅針對下拉選單輕量級引入了 Choices.js。
